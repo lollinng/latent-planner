@@ -3,7 +3,7 @@
 A small JEPA world model that learned a two-room world from pixels, and plans routes in its own latent space,
 live in the browser.
 
-<!-- DEMO_LINK -->
+**Live demo: https://prathameshjadhav.in/latent-planner/** (runs entirely in your browser; works on phones)
 
 ![The demo planning a route through the door](docs/demo.gif)
 

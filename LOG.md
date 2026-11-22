@@ -68,3 +68,5 @@
 - 06:55 Browser planner evaluated on the 100 test tasks in headless Chrome (tests/web_eval.py: cem.js + ORT-web +
   env.js, same rule and budget): 0.99 (same 1.00, other 0.98), 9.2 steps, 172 ms/replan. The miss (task 35) has its
   goal in the doorway corner (x 33.9, y 45.1); agent ended 8.7 px away. Reported as its own row.
+- 07:02 Owner OK'd a public repo + demo. Before publishing, scrubbed machine/service details and private links from
+  the whole (never pushed) git history with git-filter-repo; added MIT LICENSE and the demo/repo links.

@@ -20,7 +20,7 @@ This "server" is a **Windows laptop running Ubuntu under WSL2**, not a cloud box
 ## What this means for the project
 - **GPU is usable** but small (4 GB). Training LeWM at its paper settings (ViT-tiny at 224 px, batch 128, ~15M params)
   would need small batches and many hours here. A small model on 64x64 frames trains in minutes. This is why the
-  live demo uses our own 2-D environment and a ~1M-param model (see `research/NOTES.md`).
+  live demo uses our own 2-D environment and a ~1M-param model (see `PLAN.md`).
 - **No reverse proxy and no public server.** It is a laptop behind NAT, so self-hosting the demo is a bad idea.
   The personal site `prathameshjadhav.in` is GitHub Pages from `lollinng/lollinng.github.io` (CNAME file present).
   A GitHub Pages project site in the `lollinng` account would be served at
