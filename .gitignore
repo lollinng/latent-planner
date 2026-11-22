@@ -17,3 +17,4 @@ results/eval_all.log
 colab_jobs/
 .colab-venv/
 .claude/worktrees/
+web/deploy.json

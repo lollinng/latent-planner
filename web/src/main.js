@@ -459,6 +459,42 @@ for (const b of document.querySelectorAll("[data-scene]")) {
 async function fetchWithProgress(url, onBytes) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+  return readWithProgress(res, onBytes);
+}
+
+// Model files come from jsDelivr pinned to the deployed commit (written to deploy.json by the Pages workflow),
+// which is much faster than GitHub Pages from some places; any failure falls back to the same-origin copy.
+let deployPromise = null;
+function getDeploy() {
+  deployPromise ??= fetch("deploy.json", { cache: "no-store" })
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null);
+  return deployPromise;
+}
+
+async function fetchModelFile(dir, f, onBytes) {
+  const d = await getDeploy();
+  if (d && d.sha && d.repo) {
+    let got = 0;
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 8000); // no response in 8 s -> use the same-origin copy
+      const res = await fetch(`https://cdn.jsdelivr.net/gh/${d.repo}@${d.sha}/web/${dir}${f}`, { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const out = await readWithProgress(res, (n) => { got += n; onBytes(n); });
+      modelSource = "jsDelivr";
+      return out;
+    } catch (e) {
+      onBytes(-got); // undo partial progress before retrying
+      console.warn(`jsDelivr failed for ${f} (${e.message}); using the same-origin copy`);
+    }
+  }
+  modelSource = "GitHub Pages";
+  return fetchWithProgress(dir + f, onBytes);
+}
+
+async function readWithProgress(res, onBytes) {
   const reader = res.body.getReader();
   const chunks = [];
   for (;;) {
@@ -473,6 +509,8 @@ async function fetchWithProgress(url, onBytes) {
   return out;
 }
 
+let modelSource = "same origin";
+
 async function loadModel(name) {
   if (cache[name]) return cache[name];
   const dir = SCENES[name].dir;
@@ -485,7 +523,7 @@ async function loadModel(name) {
     ui.loadBar.style.width = `${Math.min(100, (100 * got) / total).toFixed(1)}%`;
     ui.loadText.textContent = `Loading model ${(got / 1e6).toFixed(1)} / ${(total / 1e6).toFixed(1)} MB`;
   };
-  const bytes = await Promise.all(files.map((f) => fetchWithProgress(dir + f, tick)));
+  const bytes = await Promise.all(files.map((f) => fetchModelFile(dir, f, tick)));
   const get = (f) => bytes[files.indexOf(f)];
   ui.loadText.textContent = "Starting the runtime…";
   ort.env.wasm.numThreads = 1; // static hosting has no cross-origin isolation, so no wasm threads
@@ -533,9 +571,9 @@ async function switchScene(name, first = false) {
   }
   const c = meta.cem, steps = (c.knots * c.hold) / meta.frameskip;
   ui.search.textContent = `${c.samples} plans × ${c.iters} rounds × ${steps} steps`;
-  ui.backend.textContent = `ONNX Runtime Web ${ORT_VERSION}, wasm`;
+  ui.backend.textContent = `ONNX Runtime Web ${ORT_VERSION}, wasm; model via ${modelSource}`;
   // for automated tests (tests/web_smoke.py, tests/web_eval.py)
-  window.__lp = { S, meta, planner, E, EP, Planner, scene: name };
+  window.__lp = { S, meta, planner, E, EP, Planner, scene: name, modelSource };
   await setGoal(S.goal);
   ui.loading.classList.add("done");
   S.ready = true;

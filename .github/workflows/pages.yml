@@ -20,6 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: actions/configure-pages@v6
+      # Lets the page fetch model files from jsDelivr pinned to this exact commit (falls back to Pages).
+      - run: echo '{"repo":"${{ github.repository }}","sha":"${{ github.sha }}"}' > web/deploy.json
       - uses: actions/upload-pages-artifact@v5
         with:
           path: web
