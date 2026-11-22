@@ -82,21 +82,23 @@ def shift_plan(knots: torch.Tensor, n: int) -> torch.Tensor:
 # -------------------------------------------------------------------------------------------------------------
 
 def cem_plan_oracle(pos: np.ndarray, goal: np.ndarray, cfg: CEMConfig, rng: np.random.Generator,
-                    init_mean: np.ndarray | None = None) -> np.ndarray:
+                    init_mean: np.ndarray | None = None, step_fn=None) -> np.ndarray:
+    """pos, goal: (N, state_dim) true states. step_fn(states, actions) defaults to the two-room dynamics."""
     from . import env
 
-    N, K, S = pos.shape[0], cfg.knots, cfg.samples
+    step = step_fn or env.step_pos_batch
+    N, K, S, sd = pos.shape[0], cfg.knots, cfg.samples, pos.shape[1]
     mean = np.zeros((N, K, 2)) if init_mean is None else init_mean.copy()
     std = np.full((N, K, 2), cfg.init_std)
     for _ in range(cfg.iters):
         cand = np.clip(mean[:, None] + std[:, None] * rng.standard_normal((N, S, K, 2)), -1, 1)
         cand[:, 0] = mean
-        p = np.repeat(pos[:, None], S, axis=1).reshape(-1, 2)
+        p = np.repeat(pos[:, None], S, axis=1).reshape(-1, sd)
         acts = np.repeat(cand, cfg.hold, axis=2).reshape(N * S, K * cfg.hold, 2)
         run = np.zeros(N * S)
-        g = np.repeat(goal[:, None], S, axis=1).reshape(-1, 2)
+        g = np.repeat(goal[:, None], S, axis=1).reshape(-1, sd)
         for t in range(K * cfg.hold):
-            p = env.step_pos_batch(p, acts[:, t])
+            p = step(p, acts[:, t])
             run += ((p - g) ** 2).sum(1)
         cost = (((p - g) ** 2).sum(1) + cfg.running_w * run / (K * cfg.hold)).reshape(N, S)
         idx = np.argsort(cost, axis=1)[:, : cfg.elites]

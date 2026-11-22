@@ -79,7 +79,7 @@ def peak_rss_gb() -> float:
 
 
 def generate(out_dir: str | Path, episodes: int, steps: int, seed: int, waypoint_frac: float = 0.4,
-             chunk: int = 64, max_rss_gb: float = 3.0) -> dict:
+             chunk: int = 64, max_rss_gb: float = 3.0, scene: str = "tworoom") -> dict:
     """Generate a dataset straight to disk, memory-bounded.
 
     Writes out_dir/frames.npy (uint8, (E, T+1, 64, 64, 3)) by appending chunk episodes at a time after the header,
@@ -95,17 +95,32 @@ def generate(out_dir: str | Path, episodes: int, steps: int, seed: int, waypoint
     # Plain sequential writes after a .npy header (no memmap), so written pages never count toward our RSS.
     fh = open(frames_path, "wb")
     np.lib.format.write_array_header_1_0(fh, {"descr": "|u1", "fortran_order": False, "shape": shape})
-    P = np.empty((episodes, steps + 1, 2))
+    if scene == "push":
+        from . import env_push
+
+        sdim, render_batch = 4, env_push.render_batch
+        policy_names = ("push", "wander")
+
+        def roll(policy):
+            return env_push.rollout(rng, steps, policy)
+    else:
+        sdim, render_batch = 2, env.render_batch
+        policy_names = ("waypoint", "wander")
+
+        def roll(policy):
+            return rollout(rng, steps, policy)
+
+    P = np.empty((episodes, steps + 1, sdim))
     A = np.empty((episodes, steps, 2))
     policies = []
     t0 = time.time()
     for e0 in range(0, episodes, chunk):
         e1 = min(e0 + chunk, episodes)
         for e in range(e0, e1):
-            policy = "waypoint" if rng.random() < waypoint_frac else "wander"
+            policy = policy_names[0] if rng.random() < waypoint_frac else policy_names[1]
             policies.append(policy)
-            P[e], A[e] = rollout(rng, steps, policy)
-        imgs = env.render_batch(P[e0:e1].reshape(-1, 2))
+            P[e], A[e] = roll(policy)
+        imgs = render_batch(P[e0:e1].reshape(-1, sdim))
         fh.write(np.ascontiguousarray(imgs).tobytes())
         del imgs
         fh.flush()
@@ -120,8 +135,10 @@ def generate(out_dir: str | Path, episodes: int, steps: int, seed: int, waypoint
     np.save(out_dir / "pos.npy", P.astype(np.float32))
     np.save(out_dir / "actions.npy", A.astype(np.float32))
     cross = float((np.sign(P[:, :, 0] - 32).std(axis=1) > 0).mean())
-    meta = {"episodes": episodes, "steps": steps, "seed": seed, "waypoint_frac": waypoint_frac,
-            "waypoint_episodes": policies.count("waypoint"), "frac_cross_door": cross,
+    moved = float((np.linalg.norm(P[:, -1, 2:] - P[:, 0, 2:], axis=1) > 5).mean()) if scene == "push" else None
+    meta = {"scene": scene, "episodes": episodes, "steps": steps, "seed": seed, "waypoint_frac": waypoint_frac,
+            "waypoint_episodes": policies.count(policy_names[0]), "frac_cross_door": cross,
+            "frac_block_moved_5px": moved,
             "env": {"SIZE": env.SIZE, "SPEED": env.SPEED, "SUBSTEPS": env.SUBSTEPS, "AGENT_R": env.AGENT_R,
                     "DOOR": [env.DOOR_Y0, env.DOOR_Y1], "WALL_X": [env.WALL_X0, env.WALL_X1]},
             "seconds": round(time.time() - t0, 1), "peak_rss_gb": round(peak_rss_gb(), 3)}
@@ -163,11 +180,17 @@ def main() -> None:
     ap.add_argument("--chunk", type=int, default=64, help="episodes rendered per batch")
     ap.add_argument("--max-rss-gb", type=float, default=3.0)
     ap.add_argument("--out", type=str, default="data/train")
+    ap.add_argument("--scene", choices=["tworoom", "push"], default="tworoom")
+    ap.add_argument("--policy-frac", type=float, default=None,
+                    help="fraction of episodes from the directed policy (waypoint / push); default 0.4 / 0.7")
     args = ap.parse_args()
-    meta = generate(args.out, args.episodes, args.steps, args.seed, chunk=args.chunk, max_rss_gb=args.max_rss_gb)
+    frac = args.policy_frac if args.policy_frac is not None else (0.7 if args.scene == "push" else 0.4)
+    meta = generate(args.out, args.episodes, args.steps, args.seed, waypoint_frac=frac, chunk=args.chunk,
+                    max_rss_gb=args.max_rss_gb, scene=args.scene)
     gb = args.episodes * (args.steps + 1) * env.SIZE * env.SIZE * 3 / 1e9
     print(f"wrote {args.out}/: {args.episodes} x {args.steps + 1} frames ({gb:.2f} GB on disk), "
-          f"{meta['frac_cross_door']:.0%} of episodes cross the door, {meta['seconds']:.0f}s, "
+          + (f"{meta['frac_block_moved_5px']:.0%} of episodes move the block > 5 px, " if args.scene == "push"
+             else f"{meta['frac_cross_door']:.0%} of episodes cross the door, ") + f"{meta['seconds']:.0f}s, "
           f"peak RSS {meta['peak_rss_gb']:.2f} GB")
 
 

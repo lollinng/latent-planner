@@ -90,18 +90,20 @@ def run_episodes(policy, tasks: dict, budget: int = BUDGET) -> dict:
 
 
 class LatentCEM:
-    def __init__(self, model, tasks: dict, cfg: CEMConfig, exec_knots: int = 1, seed: int = 0, device="cuda"):
+    def __init__(self, model, tasks: dict, cfg: CEMConfig, exec_knots: int = 1, seed: int = 0, device="cuda",
+                 render_batch=None):
         self.model, self.cfg, self.exec, self.dev = model, cfg, exec_knots, device
+        self.render = render_batch or env.render_batch
         goal = np.array(tasks["goals"], dtype=np.float64)
         with torch.no_grad():
-            self.zg = model.encode(torch.from_numpy(env.render_batch(goal)).to(device))
+            self.zg = model.encode(torch.from_numpy(self.render(goal)).to(device))
         self.mean = None
         self.gen = torch.Generator(device=device)
         self.gen.manual_seed(seed)
 
     def __call__(self, pos, active, t):
         with torch.no_grad():
-            z0 = self.model.encode(torch.from_numpy(env.render_batch(pos)).to(self.dev))
+            z0 = self.model.encode(torch.from_numpy(self.render(pos)).to(self.dev))
         init = None if self.mean is None else shift_plan(self.mean, self.exec)
         self.mean, _ = cem_plan(self.model, z0, self.zg, self.cfg, init, self.gen)
         knots = self.mean[:, : self.exec].cpu().numpy()
