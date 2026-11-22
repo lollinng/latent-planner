@@ -11,13 +11,16 @@
 <body>
   <header class="top">
     <h1>LatentPlanner</h1>
-    <p class="lede">A 1.2M-parameter world model learned this two-room world from pixels alone: no rewards, no
-      positions, no map. Tap anywhere to set a goal. It plans a route by imagining futures in its own latent space,
-      live in your browser.</p>
+    <p class="lede">Small world models learned these worlds from pixels alone: no rewards, no positions, no map.
+      Tap to set a goal. Each model plans by imagining futures in its own latent space, live in your browser.</p>
   </header>
 
   <main class="app">
     <section class="stage" aria-label="Environment">
+      <div class="scenes" role="group" aria-label="Scene">
+        <button type="button" data-scene="tworoom" aria-pressed="true">Two rooms</button>
+        <button type="button" data-scene="push" aria-pressed="false">Push the block</button>
+      </div>
       <div class="arena-wrap" id="arenaWrap">
         <canvas id="arena" width="64" height="64" aria-label="The 64 by 64 pixel frame the model sees"></canvas>
         <canvas id="overlay" aria-hidden="true"></canvas>
@@ -30,9 +33,10 @@
       </div>
       <div class="toggles">
         <label><input type="checkbox" id="showPlan" checked> <span class="sw plan"></span>Imagined path</label>
-        <label><input type="checkbox" id="showCost"> <span class="sw cost"></span>Planner's cost map</label>
+        <label id="costToggle"><input type="checkbox" id="showCost"> <span class="sw cost"></span>Planner's cost map</label>
       </div>
-      <p class="hint">Tap to set a goal. Drag the agent to move it.</p>
+      <p class="hint" id="hint">Tap to set a goal. Drag the agent to move it.</p>
+      <p class="hint scene-note" id="sceneNote" hidden></p>
     </section>
 
     <aside class="panel" aria-label="What the model is doing">

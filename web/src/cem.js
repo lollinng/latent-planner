@@ -97,14 +97,14 @@ export class Planner {
     return out;
   }
 
-  // Visual only: linear probe z -> (x, y), fitted after training. The planner never uses it.
+  // Visual only: linear read-out z -> state ((x, y), or (agent x, y, block x, y) for push), fitted after
+  // training. The planner never uses it.
   probe(z) {
     const { W, b } = this.meta.probe;
-    const p = [b[0], b[1]];
-    for (let d = 0; d < this.D; d++) {
-      p[0] += W[0][d] * z[d];
-      p[1] += W[1][d] * z[d];
-    }
-    return p;
+    return W.map((row, i) => {
+      let v = b[i];
+      for (let d = 0; d < this.D; d++) v += row[d] * z[d];
+      return v;
+    });
   }
 }

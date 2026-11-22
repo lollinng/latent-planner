@@ -24,8 +24,10 @@ def serve(port: int) -> None:
     threading.Thread(target=srv.serve_forever, daemon=True).start()
 
 
-def run(url: str, shots: Path, goals: int, engine: str, cpu_throttle: float = 1.0) -> dict:
-    out = {"engine": engine, "cpu_throttle": cpu_throttle}
+def run(url: str, shots: Path, goals: int, engine: str, cpu_throttle: float = 1.0, scene: str = "tworoom") -> dict:
+    out = {"engine": engine, "cpu_throttle": cpu_throttle, "scene": scene}
+    if scene == "push":
+        url = url.split("#")[0] + "#push"
     with sync_playwright() as p:
         if engine == "chrome":
             browser = p.chromium.launch(channel="chrome", headless=True)
@@ -47,15 +49,19 @@ def run(url: str, shots: Path, goals: int, engine: str, cpu_throttle: float = 1.
             load_s = time.time() - t0
             reached = []
             for g in range(goals):
-                page.wait_for_function("window.__lp.S.reached", timeout=120_000)
-                reached.append(page.evaluate("window.__lp.S.steps"))
+                try:
+                    page.wait_for_function("window.__lp.S.reached", timeout=60_000 if scene == "push" else 120_000)
+                    reached.append(page.evaluate("window.__lp.S.steps"))
+                except Exception:
+                    reached.append(f"not reached in 60 s ({page.evaluate('window.__lp.S.steps')} steps)")
                 if g == 0:
                     page.evaluate("document.getElementById('showCost').click()")
-                    page.screenshot(path=str(shots / f"{engine}_{name}.png"), full_page=(name == "phone"))
+                    page.screenshot(path=str(shots / f"{engine}_{scene}_{name}.png"), full_page=(name == "phone"))
                     page.evaluate("document.getElementById('showCost').click()")
                 page.click("#newTask")
             times = page.evaluate("window.__lp.S.planTimes")
             scroll_w = page.evaluate("document.documentElement.scrollWidth")
+            assert page.evaluate("window.__lp.scene") == scene
             out[name] = {"load_s": round(load_s, 2), "steps_to_goal": reached,
                          "plan_ms_median": sorted(times)[len(times) // 2] if times else None,
                          "horizontal_overflow": scroll_w > vp["width"], "console_errors": errors}
@@ -72,9 +78,10 @@ if __name__ == "__main__":
     ap.add_argument("--goals", type=int, default=3)
     ap.add_argument("--engine", default="chrome", choices=["chrome", "chromium", "webkit", "firefox"])
     ap.add_argument("--cpu-throttle", type=float, default=1.0)
+    ap.add_argument("--scene", default="tworoom", choices=["tworoom", "push"])
     a = ap.parse_args()
     if a.url is None:
         serve(a.port)
         a.url = f"http://127.0.0.1:{a.port}/"
     Path(a.shots).mkdir(parents=True, exist_ok=True)
-    print(json.dumps(run(a.url, Path(a.shots), a.goals, a.engine, a.cpu_throttle), indent=1))
+    print(json.dumps(run(a.url, Path(a.shots), a.goals, a.engine, a.cpu_throttle, a.scene), indent=1))
