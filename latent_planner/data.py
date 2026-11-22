@@ -136,6 +136,25 @@ def load(data_dir: str | Path) -> dict[str, np.ndarray]:
             "actions": np.load(d / "actions.npy"), "meta": json.loads((d / "meta.json").read_text())}
 
 
+def read_frames(data_dir: str | Path, e0: int, e1: int) -> np.ndarray:
+    """Read episodes [e0, e1) of frames.npy with a plain file read (no memmap, so nothing stays mapped and
+    counted in RSS once the caller drops the array)."""
+    path = Path(data_dir) / "frames.npy"
+    with open(path, "rb") as fh:
+        version = np.lib.format.read_magic(fh)
+        read_header = np.lib.format.read_array_header_1_0 if version == (1, 0) else np.lib.format.read_array_header_2_0
+        shape, _, _ = read_header(fh)
+        per_ep = int(np.prod(shape[1:]))
+        e1 = min(e1, shape[0])
+        fh.seek(fh.tell() + e0 * per_ep)
+        arr = np.fromfile(fh, dtype=np.uint8, count=(e1 - e0) * per_ep)
+    return arr.reshape((e1 - e0, *shape[1:]))
+
+
+def num_episodes(data_dir: str | Path) -> int:
+    return int(np.load(Path(data_dir) / "frames.npy", mmap_mode="r").shape[0])
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--episodes", type=int, default=2000)
