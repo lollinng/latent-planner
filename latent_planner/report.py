@@ -215,7 +215,7 @@ def main() -> None:
             col = BLUE if lam == 0.09 else NEUTRAL
             ax.bar(xpos[lam], g.success.mean() * 100, color=col, width=0.6)
             ax.scatter([xpos[lam]] * len(g), g.success * 100, color=INK, s=12, zorder=3)
-            ax.text(xpos[lam], g.success.mean() * 100 + 3, f"{g.success.mean() * 100:.0f}%", ha="center", fontsize=9,
+            ax.text(xpos[lam], g.success.max() * 100 + 4, f"{g.success.mean() * 100:.0f}%", ha="center", fontsize=9,
                     color=INK)
         ax.set_xticks(range(len(lams)), [f"{lam:g}" for lam in lams])
         ax.set_xlabel("SIGReg weight λ (blue: LeWM default, used for the main results)", fontsize=9, color=INK2)

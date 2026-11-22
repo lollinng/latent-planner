@@ -1,0 +1,197 @@
+[{"stream_name":"stderr","time":0.852462715,"data":"/kaggle/src/script.py:8: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.\n"}
+,{"stream_name":"stderr","time":0.852526805,"data":"  tarfile.open(fileobj=io.BytesIO(base64.b64decode(PAYLOAD)), mode=\"r:gz\").extractall(WORK)\n"}
+,{"stream_name":"stdout","time":7.911650377,"data":"torch 2.11.0+cu130 cuda True Tesla T4\n"}
+,{"stream_name":"stdout","time":7.911690893,"data":"+ python -m latent_planner.data --episodes 2000 --seed 0 --out data/train\n"}
+,{"stream_name":"stdout","time":8.570377879,"data":"  64/2000 episodes, rss 0.05 GB, 0s\n"}
+,{"stream_name":"stdout","time":11.885017605,"data":"  576/2000 episodes, rss 0.04 GB, 4s\n"}
+,{"stream_name":"stdout","time":15.397186236,"data":"  1088/2000 episodes, rss 0.04 GB, 7s\n"}
+,{"stream_name":"stdout","time":18.770167233,"data":"  1600/2000 episodes, rss 0.04 GB, 11s\n"}
+,{"stream_name":"stdout","time":21.529313799,"data":"  2000/2000 episodes, rss 0.06 GB, 13s\n"}
+,{"stream_name":"stdout","time":21.535477896,"data":"wrote data/train/: 2000 x 49 frames (1.20 GB on disk), 56% of episodes cross the door, 13s, peak RSS 0.16 GB\n"}
+,{"stream_name":"stdout","time":21.566865303,"data":"exit 0 after 14s\n"}
+,{"stream_name":"stdout","time":21.566884267,"data":"+ python -m latent_planner.data --episodes 200 --seed 1 --out data/val\n"}
+,{"stream_name":"stdout","time":22.244992124,"data":"  64/200 episodes, rss 0.05 GB, 0s\n"}
+,{"stream_name":"stdout","time":23.171044807,"data":"  200/200 episodes, rss 0.04 GB, 1s\n"}
+,{"stream_name":"stdout","time":23.172915865,"data":"wrote data/val/: 200 x 49 frames (0.12 GB on disk), 56% of episodes cross the door, 1s, peak RSS 0.16 GB\n"}
+,{"stream_name":"stdout","time":23.200076097,"data":"exit 0 after 2s\n"}
+,{"stream_name":"stdout","time":26.494239503,"data":"SHA256 data/train/frames.npy a0b512df6b3c08d5\n"}
+,{"stream_name":"stdout","time":26.496767566,"data":"SHA256 data/train/pos.npy 377b9281cf38ddb2\n"}
+,{"stream_name":"stdout","time":26.499104437,"data":"SHA256 data/train/actions.npy c17504485d372de3\n"}
+,{"stream_name":"stdout","time":26.499481499,"data":"SHA256 data/val/pos.npy 44b655eb9aa787e2\n"}
+,{"stream_name":"stdout","time":26.49975103,"data":"+ python -m latent_planner.train --out runs/t4_lam0.09_s0 --lam 0.09 --seed 0 \u003e runs/t4_lam0.09_s0/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":412.139853343,"data":"exit 0 after 386s\n"}
+,{"stream_name":"stdout","time":412.13989605,"data":"+ tail -3 runs/t4_lam0.09_s0/stdout.txt\n"}
+,{"stream_name":"stdout","time":412.142414172,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":412.142434206,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":412.142480086,"data":"}\n"}
+,{"stream_name":"stdout","time":412.142724032,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":412.142758291,"data":"+ python -m latent_planner.eval --runs runs/t4_lam0.09_s0 --taskset test --tag main --running-w 1.0\n"}
+,{"stream_name":"stdout","time":420.809420196,"data":"latent_cem runs/t4_lam0.09_s0           success 1.00 (same 1.00, cross 1.00) steps 10.2 final 2.7px 803 ms/replan\n"}
+,{"stream_name":"stdout","time":421.323411925,"data":"exit 0 after 9s\n"}
+,{"stream_name":"stdout","time":421.323451816,"data":"+ python -m latent_planner.analyze --runs runs/t4_lam0.09_s0\n"}
+,{"stream_name":"stdout","time":424.902827558,"data":"{'run': 't4_lam0.09_s0', 'lam': 0.09, 'seed': 0, 'frameskip': 1, 'val_eff_rank': 23.6981, 'val_nmse_m1': 0.0053, 'val_nmse_e16': 0.0242, 'probe_rmse_px': 0.745, 'surprise_auroc': 1.0, 'surprise_real_median': 0.0031, 'surprise_teleport_median': 1.9102, 'spearman_geo': 0.3795, 'spearman_euc': 0.3591, 'basin_px': 12.0}\n"}
+,{"stream_name":"stdout","time":425.585972826,"data":"exit 0 after 4s\n"}
+,{"stream_name":"stdout","time":425.589578473,"data":"+ python -m latent_planner.train --out runs/lam0.01_s0 --lam 0.01 --seed 0 \u003e runs/lam0.01_s0/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":803.499694082,"data":"exit 0 after 378s\n"}
+,{"stream_name":"stdout","time":803.499758996,"data":"+ tail -3 runs/lam0.01_s0/stdout.txt\n"}
+,{"stream_name":"stdout","time":803.501934428,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":803.501955688,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":803.501961554,"data":"}\n"}
+,{"stream_name":"stdout","time":803.502343675,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":803.502358155,"data":"+ python -m latent_planner.eval --runs runs/lam0.01_s0 --taskset test --tag main --running-w 1.0\n"}
+,{"stream_name":"stdout","time":811.398007809,"data":"latent_cem runs/lam0.01_s0              success 1.00 (same 1.00, cross 1.00) steps 8.6 final 2.6px 810 ms/replan\n"}
+,{"stream_name":"stdout","time":811.902205107,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":811.902240994,"data":"+ python -m latent_planner.analyze --runs runs/lam0.01_s0\n"}
+,{"stream_name":"stdout","time":815.409395753,"data":"{'run': 'lam0.01_s0', 'lam': 0.01, 'seed': 0, 'frameskip': 1, 'val_eff_rank': 11.0683, 'val_nmse_m1': 0.001, 'val_nmse_e16': 0.0099, 'probe_rmse_px': 0.2636, 'surprise_auroc': 1.0, 'surprise_real_median': 0.0006, 'surprise_teleport_median': 1.6751, 'spearman_geo': 0.6594, 'spearman_euc': 0.6611, 'basin_px': 20.0}\n"}
+,{"stream_name":"stdout","time":816.089942051,"data":"exit 0 after 4s\n"}
+,{"stream_name":"stdout","time":816.097661806,"data":"+ python -m latent_planner.train --out runs/lam0.01_s1 --lam 0.01 --seed 1 \u003e runs/lam0.01_s1/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":1181.624294981,"data":"exit 0 after 366s\n"}
+,{"stream_name":"stdout","time":1181.624340706,"data":"+ tail -3 runs/lam0.01_s1/stdout.txt\n"}
+,{"stream_name":"stdout","time":1181.626425698,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":1181.626446031,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":1181.626451741,"data":"}\n"}
+,{"stream_name":"stdout","time":1181.626802643,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":1181.626816234,"data":"+ python -m latent_planner.eval --runs runs/lam0.01_s1 --taskset test --tag main --running-w 1.0\n"}
+,{"stream_name":"stdout","time":1189.516525205,"data":"latent_cem runs/lam0.01_s1              success 1.00 (same 1.00, cross 1.00) steps 8.7 final 2.8px 805 ms/replan\n"}
+,{"stream_name":"stdout","time":1190.019369092,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":1190.019413002,"data":"+ python -m latent_planner.analyze --runs runs/lam0.01_s1\n"}
+,{"stream_name":"stdout","time":1193.549426163,"data":"{'run': 'lam0.01_s1', 'lam': 0.01, 'seed': 1, 'frameskip': 1, 'val_eff_rank': 10.9706, 'val_nmse_m1': 0.001, 'val_nmse_e16': 0.0093, 'probe_rmse_px': 0.2727, 'surprise_auroc': 1.0, 'surprise_real_median': 0.0006, 'surprise_teleport_median': 1.6205, 'spearman_geo': 0.6756, 'spearman_euc': 0.6626, 'basin_px': 20.0}\n"}
+,{"stream_name":"stdout","time":1194.216959906,"data":"exit 0 after 4s\n"}
+,{"stream_name":"stdout","time":1194.229018381,"data":"+ python -m latent_planner.train --out runs/lam0.01_s2 --lam 0.01 --seed 2 \u003e runs/lam0.01_s2/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":1563.872699597,"data":"exit 0 after 370s\n"}
+,{"stream_name":"stdout","time":1563.872757063,"data":"+ tail -3 runs/lam0.01_s2/stdout.txt\n"}
+,{"stream_name":"stdout","time":1563.875194107,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":1563.875234562,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":1563.875239754,"data":"}\n"}
+,{"stream_name":"stdout","time":1563.875561771,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":1563.875572812,"data":"+ python -m latent_planner.eval --runs runs/lam0.01_s2 --taskset test --tag main --running-w 1.0\n"}
+,{"stream_name":"stdout","time":1573.300593645,"data":"latent_cem runs/lam0.01_s2              success 1.00 (same 1.00, cross 1.00) steps 9.1 final 2.7px 801 ms/replan\n"}
+,{"stream_name":"stdout","time":1573.801268931,"data":"exit 0 after 10s\n"}
+,{"stream_name":"stdout","time":1573.801302652,"data":"+ python -m latent_planner.analyze --runs runs/lam0.01_s2\n"}
+,{"stream_name":"stdout","time":1577.359057321,"data":"{'run': 'lam0.01_s2', 'lam': 0.01, 'seed': 2, 'frameskip': 1, 'val_eff_rank': 10.7225, 'val_nmse_m1': 0.0009, 'val_nmse_e16': 0.0102, 'probe_rmse_px': 0.2314, 'surprise_auroc': 1.0, 'surprise_real_median': 0.0006, 'surprise_teleport_median': 1.6428, 'spearman_geo': 0.6661, 'spearman_euc': 0.665, 'basin_px': 20.0}\n"}
+,{"stream_name":"stdout","time":1578.019087315,"data":"exit 0 after 4s\n"}
+,{"stream_name":"stdout","time":1578.033316918,"data":"+ python -m latent_planner.train --out runs/lam0.03_s0 --lam 0.03 --seed 0 \u003e runs/lam0.03_s0/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":1946.274667504,"data":"exit 0 after 368s\n"}
+,{"stream_name":"stdout","time":1946.274716189,"data":"+ tail -3 runs/lam0.03_s0/stdout.txt\n"}
+,{"stream_name":"stdout","time":1946.276986203,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":1946.277005573,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":1946.277010509,"data":"}\n"}
+,{"stream_name":"stdout","time":1946.277281887,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":1946.277295679,"data":"+ python -m latent_planner.eval --runs runs/lam0.03_s0 --taskset test --tag main --running-w 1.0\n"}
+,{"stream_name":"stdout","time":1953.39429573,"data":"latent_cem runs/lam0.03_s0              success 1.00 (same 1.00, cross 1.00) steps 8.8 final 2.7px 810 ms/replan\n"}
+,{"stream_name":"stdout","time":1953.90122154,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":1953.901264691,"data":"+ python -m latent_planner.analyze --runs runs/lam0.03_s0\n"}
+,{"stream_name":"stdout","time":1957.462983521,"data":"{'run': 'lam0.03_s0', 'lam': 0.03, 'seed': 0, 'frameskip': 1, 'val_eff_rank': 16.6225, 'val_nmse_m1': 0.0022, 'val_nmse_e16': 0.0143, 'probe_rmse_px': 0.4049, 'surprise_auroc': 1.0, 'surprise_real_median': 0.0013, 'surprise_teleport_median': 1.8739, 'spearman_geo': 0.4649, 'spearman_euc': 0.4818, 'basin_px': 14.0}\n"}
+,{"stream_name":"stdout","time":1958.162253775,"data":"exit 0 after 4s\n"}
+,{"stream_name":"stdout","time":1958.180233662,"data":"+ python -m latent_planner.train --out runs/lam0.03_s1 --lam 0.03 --seed 1 \u003e runs/lam0.03_s1/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":2325.75213213,"data":"exit 0 after 368s\n"}
+,{"stream_name":"stdout","time":2325.753545076,"data":"+ tail -3 runs/lam0.03_s1/stdout.txt\n"}
+,{"stream_name":"stdout","time":2325.754343396,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":2325.754358765,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":2325.754364183,"data":"}\n"}
+,{"stream_name":"stdout","time":2325.754652522,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":2325.754668692,"data":"+ python -m latent_planner.eval --runs runs/lam0.03_s1 --taskset test --tag main --running-w 1.0\n"}
+,{"stream_name":"stdout","time":2334.437737144,"data":"latent_cem runs/lam0.03_s1              success 1.00 (same 1.00, cross 1.00) steps 8.9 final 2.7px 805 ms/replan\n"}
+,{"stream_name":"stdout","time":2334.948547668,"data":"exit 0 after 9s\n"}
+,{"stream_name":"stdout","time":2334.948582217,"data":"+ python -m latent_planner.analyze --runs runs/lam0.03_s1\n"}
+,{"stream_name":"stdout","time":2338.513250865,"data":"{'run': 'lam0.03_s1', 'lam': 0.03, 'seed': 1, 'frameskip': 1, 'val_eff_rank': 16.2244, 'val_nmse_m1': 0.0022, 'val_nmse_e16': 0.0122, 'probe_rmse_px': 0.3656, 'surprise_auroc': 1.0, 'surprise_real_median': 0.0014, 'surprise_teleport_median': 1.8246, 'spearman_geo': 0.4815, 'spearman_euc': 0.487, 'basin_px': 14.0}\n"}
+,{"stream_name":"stdout","time":2339.221260245,"data":"exit 0 after 4s\n"}
+,{"stream_name":"stdout","time":2339.243640203,"data":"+ python -m latent_planner.train --out runs/lam0.03_s2 --lam 0.03 --seed 2 \u003e runs/lam0.03_s2/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":2707.105078248,"data":"exit 0 after 368s\n"}
+,{"stream_name":"stdout","time":2707.10512595,"data":"+ tail -3 runs/lam0.03_s2/stdout.txt\n"}
+,{"stream_name":"stdout","time":2707.107203486,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":2707.107224185,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":2707.107229725,"data":"}\n"}
+,{"stream_name":"stdout","time":2707.107548994,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":2707.10756402,"data":"+ python -m latent_planner.eval --runs runs/lam0.03_s2 --taskset test --tag main --running-w 1.0\n"}
+,{"stream_name":"stdout","time":2714.177686761,"data":"latent_cem runs/lam0.03_s2              success 1.00 (same 1.00, cross 1.00) steps 9.0 final 2.7px 811 ms/replan\n"}
+,{"stream_name":"stdout","time":2714.669652023,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":2714.669695956,"data":"+ python -m latent_planner.analyze --runs runs/lam0.03_s2\n"}
+,{"stream_name":"stdout","time":2718.172670874,"data":"{'run': 'lam0.03_s2', 'lam': 0.03, 'seed': 2, 'frameskip': 1, 'val_eff_rank': 15.7717, 'val_nmse_m1': 0.0021, 'val_nmse_e16': 0.0149, 'probe_rmse_px': 0.4009, 'surprise_auroc': 1.0, 'surprise_real_median': 0.0012, 'surprise_teleport_median': 1.8525, 'spearman_geo': 0.4683, 'spearman_euc': 0.4904, 'basin_px': 14.0}\n"}
+,{"stream_name":"stdout","time":2718.845824503,"data":"exit 0 after 4s\n"}
+,{"stream_name":"stdout","time":2718.867300021,"data":"+ python -m latent_planner.train --out runs/lam0.3_s0 --lam 0.3 --seed 0 \u003e runs/lam0.3_s0/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":3087.402648933,"data":"exit 0 after 369s\n"}
+,{"stream_name":"stdout","time":3087.402699632,"data":"+ tail -3 runs/lam0.3_s0/stdout.txt\n"}
+,{"stream_name":"stdout","time":3087.404804626,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":3087.404824492,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":3087.404830539,"data":"}\n"}
+,{"stream_name":"stdout","time":3087.405153384,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":3087.40517342,"data":"+ python -m latent_planner.eval --runs runs/lam0.3_s0 --taskset test --tag main --running-w 1.0\n"}
+,{"stream_name":"stdout","time":3100.023435526,"data":"latent_cem runs/lam0.3_s0               success 0.98 (same 0.98, cross 0.98) steps 12.0 final 3.5px 796 ms/replan\n"}
+,{"stream_name":"stdout","time":3100.526847776,"data":"exit 0 after 13s\n"}
+,{"stream_name":"stdout","time":3100.526883613,"data":"+ python -m latent_planner.analyze --runs runs/lam0.3_s0\n"}
+,{"stream_name":"stdout","time":3104.1189724,"data":"{'run': 'lam0.3_s0', 'lam': 0.3, 'seed': 0, 'frameskip': 1, 'val_eff_rank': 31.0459, 'val_nmse_m1': 0.0104, 'val_nmse_e16': 0.0431, 'probe_rmse_px': 1.6491, 'surprise_auroc': 1.0, 'surprise_real_median': 0.0064, 'surprise_teleport_median': 1.9411, 'spearman_geo': 0.2675, 'spearman_euc': 0.2475, 'basin_px': 10.0}\n"}
+,{"stream_name":"stdout","time":3104.792535665,"data":"exit 0 after 4s\n"}
+,{"stream_name":"stdout","time":3104.816881577,"data":"+ python -m latent_planner.train --out runs/lam0.3_s1 --lam 0.3 --seed 1 \u003e runs/lam0.3_s1/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":3473.124955917,"data":"exit 0 after 368s\n"}
+,{"stream_name":"stdout","time":3473.125032252,"data":"+ tail -3 runs/lam0.3_s1/stdout.txt\n"}
+,{"stream_name":"stdout","time":3473.127287177,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":3473.127310569,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":3473.127317549,"data":"}\n"}
+,{"stream_name":"stdout","time":3473.127687323,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":3473.12770657,"data":"+ python -m latent_planner.eval --runs runs/lam0.3_s1 --taskset test --tag main --running-w 1.0\n"}
+,{"stream_name":"stdout","time":3484.179964665,"data":"latent_cem runs/lam0.3_s1               success 1.00 (same 1.00, cross 1.00) steps 13.2 final 2.8px 798 ms/replan\n"}
+,{"stream_name":"stdout","time":3484.696798102,"data":"exit 0 after 12s\n"}
+,{"stream_name":"stdout","time":3484.696833802,"data":"+ python -m latent_planner.analyze --runs runs/lam0.3_s1\n"}
+,{"stream_name":"stdout","time":3488.228718595,"data":"{'run': 'lam0.3_s1', 'lam': 0.3, 'seed': 1, 'frameskip': 1, 'val_eff_rank': 31.0066, 'val_nmse_m1': 0.0104, 'val_nmse_e16': 0.0311, 'probe_rmse_px': 1.3281, 'surprise_auroc': 1.0, 'surprise_real_median': 0.0068, 'surprise_teleport_median': 1.9732, 'spearman_geo': 0.247, 'spearman_euc': 0.2348, 'basin_px': 10.0}\n"}
+,{"stream_name":"stdout","time":3488.91965838,"data":"exit 0 after 4s\n"}
+,{"stream_name":"stdout","time":3488.950032054,"data":"+ python -m latent_planner.train --out runs/lam0.3_s2 --lam 0.3 --seed 2 \u003e runs/lam0.3_s2/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":3855.070902928,"data":"exit 0 after 366s\n"}
+,{"stream_name":"stdout","time":3855.070977122,"data":"+ tail -3 runs/lam0.3_s2/stdout.txt\n"}
+,{"stream_name":"stdout","time":3855.073023063,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":3855.073043663,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":3855.073049293,"data":"}\n"}
+,{"stream_name":"stdout","time":3855.073407478,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":3855.073420322,"data":"+ python -m latent_planner.eval --runs runs/lam0.3_s2 --taskset test --tag main --running-w 1.0\n"}
+,{"stream_name":"stdout","time":3867.662830918,"data":"latent_cem runs/lam0.3_s2               success 0.99 (same 1.00, cross 0.98) steps 12.8 final 2.9px 798 ms/replan\n"}
+,{"stream_name":"stdout","time":3868.171816861,"data":"exit 0 after 13s\n"}
+,{"stream_name":"stdout","time":3868.171865636,"data":"+ python -m latent_planner.analyze --runs runs/lam0.3_s2\n"}
+,{"stream_name":"stdout","time":3871.726942655,"data":"{'run': 'lam0.3_s2', 'lam': 0.3, 'seed': 2, 'frameskip': 1, 'val_eff_rank': 31.4752, 'val_nmse_m1': 0.011, 'val_nmse_e16': 0.041, 'probe_rmse_px': 1.9321, 'surprise_auroc': 1.0, 'surprise_real_median': 0.0066, 'surprise_teleport_median': 1.929, 'spearman_geo': 0.25, 'spearman_euc': 0.2422, 'basin_px': 10.0}\n"}
+,{"stream_name":"stdout","time":3872.469671625,"data":"exit 0 after 4s\n"}
+,{"stream_name":"stdout","time":3872.508027746,"data":"+ python -m latent_planner.train --out runs/lam1.0_s0 --lam 1.0 --seed 0 \u003e runs/lam1.0_s0/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":4238.225936588,"data":"exit 0 after 366s\n"}
+,{"stream_name":"stdout","time":4238.225987791,"data":"+ tail -3 runs/lam1.0_s0/stdout.txt\n"}
+,{"stream_name":"stdout","time":4238.228269157,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":4238.228286288,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":4238.228291282,"data":"}\n"}
+,{"stream_name":"stdout","time":4238.228630757,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":4238.228639814,"data":"+ python -m latent_planner.eval --runs runs/lam1.0_s0 --taskset test --tag main --running-w 1.0\n"}
+,{"stream_name":"stdout","time":4250.829971966,"data":"latent_cem runs/lam1.0_s0               success 0.95 (same 1.00, cross 0.90) steps 13.1 final 4.4px 798 ms/replan\n"}
+,{"stream_name":"stdout","time":4251.335346034,"data":"exit 0 after 13s\n"}
+,{"stream_name":"stdout","time":4251.33538211,"data":"+ python -m latent_planner.analyze --runs runs/lam1.0_s0\n"}
+,{"stream_name":"stdout","time":4254.906964422,"data":"{'run': 'lam1.0_s0', 'lam': 1.0, 'seed': 0, 'frameskip': 1, 'val_eff_rank': 31.7576, 'val_nmse_m1': 0.0213, 'val_nmse_e16': 0.0594, 'probe_rmse_px': 2.868, 'surprise_auroc': 1.0, 'surprise_real_median': 0.014, 'surprise_teleport_median': 1.9244, 'spearman_geo': 0.29, 'spearman_euc': 0.2956, 'basin_px': 10.0}\n"}
+,{"stream_name":"stdout","time":4255.57145624,"data":"exit 0 after 4s\n"}
+,{"stream_name":"stdout","time":4255.605552081,"data":"+ python -m latent_planner.train --out runs/lam1.0_s1 --lam 1.0 --seed 1 \u003e runs/lam1.0_s1/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":4623.522900566,"data":"exit 0 after 368s\n"}
+,{"stream_name":"stdout","time":4623.523019204,"data":"+ tail -3 runs/lam1.0_s1/stdout.txt\n"}
+,{"stream_name":"stdout","time":4623.52512955,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":4623.525150581,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":4623.525157001,"data":"}\n"}
+,{"stream_name":"stdout","time":4623.525494765,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":4623.525543972,"data":"+ python -m latent_planner.eval --runs runs/lam1.0_s1 --taskset test --tag main --running-w 1.0\n"}
+,{"stream_name":"stdout","time":4636.124471338,"data":"latent_cem runs/lam1.0_s1               success 0.92 (same 0.98, cross 0.86) steps 11.8 final 5.4px 797 ms/replan\n"}
+,{"stream_name":"stdout","time":4636.63110303,"data":"exit 0 after 13s\n"}
+,{"stream_name":"stdout","time":4636.631136704,"data":"+ python -m latent_planner.analyze --runs runs/lam1.0_s1\n"}
+,{"stream_name":"stdout","time":4640.142678055,"data":"{'run': 'lam1.0_s1', 'lam': 1.0, 'seed': 1, 'frameskip': 1, 'val_eff_rank': 31.728, 'val_nmse_m1': 0.0226, 'val_nmse_e16': 0.0475, 'probe_rmse_px': 2.8924, 'surprise_auroc': 1.0, 'surprise_real_median': 0.015, 'surprise_teleport_median': 1.9244, 'spearman_geo': 0.2818, 'spearman_euc': 0.272, 'basin_px': 10.0}\n"}
+,{"stream_name":"stdout","time":4640.806940664,"data":"exit 0 after 4s\n"}
+,{"stream_name":"stdout","time":4640.842549578,"data":"+ python -m latent_planner.train --out runs/lam1.0_s2 --lam 1.0 --seed 2 \u003e runs/lam1.0_s2/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":5006.336600526,"data":"exit 0 after 365s\n"}
+,{"stream_name":"stdout","time":5006.336668661,"data":"+ tail -3 runs/lam1.0_s2/stdout.txt\n"}
+,{"stream_name":"stdout","time":5006.338877456,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":5006.338897287,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":5006.338961732,"data":"}\n"}
+,{"stream_name":"stdout","time":5006.339251622,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":5006.339275693,"data":"+ python -m latent_planner.eval --runs runs/lam1.0_s2 --taskset test --tag main --running-w 1.0\n"}
+,{"stream_name":"stdout","time":5018.890541763,"data":"latent_cem runs/lam1.0_s2               success 0.91 (same 1.00, cross 0.82) steps 11.7 final 6.8px 795 ms/replan\n"}
+,{"stream_name":"stdout","time":5019.388476843,"data":"exit 0 after 13s\n"}
+,{"stream_name":"stdout","time":5019.388512357,"data":"+ python -m latent_planner.analyze --runs runs/lam1.0_s2\n"}
+,{"stream_name":"stdout","time":5022.943534055,"data":"{'run': 'lam1.0_s2', 'lam': 1.0, 'seed': 2, 'frameskip': 1, 'val_eff_rank': 31.7649, 'val_nmse_m1': 0.0226, 'val_nmse_e16': 0.0636, 'probe_rmse_px': 3.032, 'surprise_auroc': 1.0, 'surprise_real_median': 0.0153, 'surprise_teleport_median': 1.9297, 'spearman_geo': 0.2783, 'spearman_euc': 0.2762, 'basin_px': 10.0}\n"}
+,{"stream_name":"stdout","time":5023.627859341,"data":"exit 0 after 4s\n"}
+,{"stream_name":"stdout","time":5023.666270861,"data":"ALL_JOBS_DONE\n"}
+,{"stream_name":"stderr","time":5026.23388515,"data":"/usr/local/lib/python3.13/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\\|'\n"}
+,{"stream_name":"stderr","time":5026.23394811,"data":"  cells[i][c] = re.sub('\\\\\\\\\\|', '|', cell)\n"}
+,{"stream_name":"stderr","time":5026.464082363,"data":"/usr/local/lib/python3.13/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\\_'\n"}
+,{"stream_name":"stderr","time":5026.46412279,"data":"  text = re.sub(r'_', '\\_', text) # Escape underscores in display text\n"}
+,{"stream_name":"stderr","time":5027.26728705,"data":"[NbConvertApp] Converting notebook __script__.ipynb to html\n"}
+,{"stream_name":"stderr","time":5028.19687458,"data":"[NbConvertApp] Writing 331361 bytes to __results__.html\n"}
+]

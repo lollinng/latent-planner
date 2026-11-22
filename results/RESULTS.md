@@ -26,3 +26,20 @@ Mean ± std over training seeds (one planning seed each). Baselines run once (se
 
 Rollout error is normalised by the latent variance (1.0 = no better than the mean embedding). Surprise AUROC separates real next frames from teleports using the prediction error. Effective rank is scale-invariant, so it stays high for a collapsed model (tiny isotropic noise); embedding std shows the collapse.
 
+## SIGReg weight sweep (frameskip 1, same test tasks)
+
+| λ | Seeds | Success | Other room | Embedding std | 16-step rollout error | Position probe RMSE (px) | Surprise AUROC | Trained on |
+|---|---|---|---|---|---|---|---|---|
+| 0 | 3 | 6 ± 0% | 1 ± 1% | 0.0002 | 4.888 | 21.33 | 0.533 | GeForce RTX 3050 Laptop GPU |
+| 0.01 | 3 | 100 ± 0% | 100 ± 0% | 0.9187 | 0.010 | 0.26 | 1.000 | Tesla T4 |
+| 0.03 | 3 | 100 ± 0% | 100 ± 0% | 0.9421 | 0.014 | 0.39 | 1.000 | Tesla T4 |
+| 0.09 | 3 | 100 ± 0% | 100 ± 0% | 0.9614 | 0.021 | 0.77 | 1.000 | GeForce RTX 3050 Laptop GPU |
+| 0.3 | 3 | 99 ± 1% | 99 ± 1% | 0.9776 | 0.038 | 1.64 | 1.000 | Tesla T4 |
+| 1 | 3 | 93 ± 2% | 86 ± 3% | 0.9876 | 0.057 | 2.93 | 1.000 | Tesla T4 |
+
+λ = 0.09 is the LeWM default used for the main results. Runs other than λ ∈ {0, 0.09} were trained and evaluated on a free Kaggle T4 from the same seeds and code (dataset regenerated there; sha256 matches the local data).
+
+## Cross-hardware re-run
+
+λ = 0.09, seed 0, retrained on a Kaggle T4 with the same code and data: success 100% (same room 100%, other room 100%), 10.2 steps; the local RTX 3050 run of the same seed scored 100%.
+

@@ -27,7 +27,8 @@ live in the browser.
 | Straight line to goal (true positions) | 70% | 40% |
 | Random actions | 11% | 2% |
 
-The model plans from the current frame and a goal image only. Without SIGReg the embedding collapses (std 0.0002)
+SIGReg weight sweep: λ = 0 collapses, 0.01-0.09 all reach 100%, 0.3 gives 99%, 1.0 gives 93%
+([details](results/RESULTS.md)). The model plans from the current frame and a goal image only. Without SIGReg the embedding collapses (std 0.0002)
 and planning fails. ~5 min of training per model on a 4 GB laptop GPU; ~220 ms per re-plan in the browser.
 
 Full numbers: [results/RESULTS.md](results/RESULTS.md). Write-up: [WRITEUP.md](WRITEUP.md).

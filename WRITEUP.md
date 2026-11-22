@@ -127,7 +127,31 @@ per plan by 4×. Planning in Chrome on this laptop drops from ~800 ms to ~220 ms
 throttling as a phone stand-in) with the same CEM budget, and test success stays at 100%. Its latent space is
 also somewhat more map-like (ρ ≈ 0.50 vs 0.36, basin ~15 px vs 12 px).
 
-<!-- SWEEP -->
+**7. SIGReg needs to be on, but not strong.** A sweep of the SIGReg weight (3 seeds each, the extra runs on a
+free Kaggle T4) shows a cliff and then a slow decline: λ = 0 collapses (6%), every λ from 0.01 to 0.09 reaches 100%,
+and larger weights make the embedding fit the Gaussian target at the expense of prediction: 16-step rollout error
+grows from 0.010 (λ = 0.01) to 0.057 (λ = 1), the position read-out degrades from 0.26 to 2.93 px, and success
+drops to 99% (λ = 0.3) and 93% (λ = 1, 86% on other-room tasks). The LeWM default of 0.09 sits in the flat region;
+on this environment 0.01-0.03 is slightly better on every probe and gives shorter paths (8.6-9.1 vs 10.3 steps).
+
+### SIGReg weight sweep (frameskip 1, same test tasks)
+
+| λ | Seeds | Success | Other room | Embedding std | 16-step rollout error | Position probe RMSE (px) | Surprise AUROC | Trained on |
+|---|---|---|---|---|---|---|---|---|
+| 0 | 3 | 6 ± 0% | 1 ± 1% | 0.0002 | 4.888 | 21.33 | 0.533 | GeForce RTX 3050 Laptop GPU |
+| 0.01 | 3 | 100 ± 0% | 100 ± 0% | 0.9187 | 0.010 | 0.26 | 1.000 | Tesla T4 |
+| 0.03 | 3 | 100 ± 0% | 100 ± 0% | 0.9421 | 0.014 | 0.39 | 1.000 | Tesla T4 |
+| 0.09 | 3 | 100 ± 0% | 100 ± 0% | 0.9614 | 0.021 | 0.77 | 1.000 | GeForce RTX 3050 Laptop GPU |
+| 0.3 | 3 | 99 ± 1% | 99 ± 1% | 0.9776 | 0.038 | 1.64 | 1.000 | Tesla T4 |
+| 1 | 3 | 93 ± 2% | 86 ± 3% | 0.9876 | 0.057 | 2.93 | 1.000 | Tesla T4 |
+
+λ = 0.09 is the LeWM default used for the main results. Runs other than λ ∈ {0, 0.09} were trained and evaluated on a free Kaggle T4 from the same seeds and code (dataset regenerated there; sha256 matches the local data).
+
+### Cross-hardware re-run
+
+λ = 0.09, seed 0, retrained on a Kaggle T4 with the same code and data: success 100% (same room 100%, other room 100%), 10.2 steps; the local RTX 3050 run of the same seed scored 100%.
+
+![Success vs SIGReg weight](results/plots/sweep.png)
 
 ## Browser demo
 
