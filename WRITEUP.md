@@ -240,10 +240,19 @@ problem is the model's imagined contact dynamics, not the search:
 - **Twice the data, 90% of it pushing, with LayerNorm and 12k steps:** 40%. Short pushes rise to 83% and long ones
   stay at 17%, so more contact data helps the easy case only. Long pushes, which need the agent to walk around the
   block, are where the remaining gap to the hand-written pusher (80%) lies.
+- **Subgoals (finding 8) don't fix it either.** The same waypoint graph built from 13,000 push frames is badly
+  fragmented at the default settings (391 pieces; push states are 4-D, so the bank covers them sparsely) and scores
+  32% on the tuning tasks, the same as plain CEM. With looser neighbour links the graph connects (4 pieces, then 1)
+  and scores 31% and 35% (long pushes 23% and 27% vs 23%), within noise, so it was not run on the test tasks.
+  Subgoals help when the route is the problem (long navigation), not when the model's contact predictions are.
 - Not tried: a bigger latent or predictor, and LeWM's longer history (3 frames), which would give the predictor
   velocity and contact context.
 
 ## Browser demo
+
+Model files are fetched from jsDelivr pinned to the deployed commit (written to `deploy.json` by the Pages
+workflow), falling back to GitHub Pages on any error; GitHub Pages delivered only ~140 KB/s to the test laptop
+at one point (page load 21-25 s), jsDelivr brought it to 1.3-3.3 s.
 
 `web/` is a static page: `env.js` (bit-exact port of the environment), `cem.js` (the same CEM as
 `planner.py`, with one ONNX call per CEM iteration scoring all 300 samples over the full horizon), and `main.js`

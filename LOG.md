@@ -118,3 +118,9 @@
   0.40 / 0.37 / 0.39, so LayerNorm helps two-room but hurts push. Push demo keeps the BatchNorm model (39%).
   GitHub Pages is slow to this laptop right now (~140 KB/s even on cache hits; jsDelivr 1.6 MB/s); live page
   load measured 21-25 s vs 3.5-7 s earlier. Transient CDN issue, not the model change; re-check later.
+- 11:53 Owner AFK for a week. Colab sign-in can't be done without the owner (Google account in a browser); left for
+  later, local GPU + Kaggle cover unattended work. Model files now served from jsDelivr pinned to the deployed
+  commit (deploy.json written by the Pages workflow), GitHub Pages fallback tested (bogus commit -> fallback OK).
+  Live load 1.3-3.3 s (was 21-25 s). Push subgoals (waypoint graph over 13k push frames, fs4 s0, tuning tasks):
+  default graph 391 components -> 0.32 (= plain); connected graphs 0.31 / 0.35 (long 0.23 / 0.27 vs 0.23):
+  within noise, not run on test. Push gap is contact dynamics, not routing.

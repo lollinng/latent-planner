@@ -114,8 +114,8 @@ class SubgoalCEM(LatentCEM):
     """LatentCEM whose CEM target at each MPC step is a waypoint on the graph path to the goal."""
 
     def __init__(self, model, tasks: dict, cfg: CEMConfig, graph: WaypointGraph, exec_knots: int = 1,
-                 seed: int = 0, device: str = "cuda", pick: str = "within"):
-        super().__init__(model, tasks, cfg, exec_knots, seed, device)
+                 seed: int = 0, device: str = "cuda", pick: str = "within", render_batch=None):
+        super().__init__(model, tasks, cfg, exec_knots, seed, device, render_batch=render_batch)
         self.g, self.pick = graph, pick
         self.reach = cfg.knots * cfg.hold / model.cfg.frameskip  # horizon in predictor steps
         self.goal_node = graph.nearest(self.zg)

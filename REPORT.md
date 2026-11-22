@@ -34,6 +34,8 @@ live in the browser:
   gives 93%. SIGReg has to be on, but too strong a weight hurts prediction.
 - **Reproducibility:** the λ = 0.09 seed-0 model retrained on a Kaggle T4 also scores 100%. The dataset
   regenerated there is byte-identical to the local one (sha256 match).
+- **Load time:** model files now come from jsDelivr pinned to the deployed commit, with GitHub Pages as the
+  fallback. The live page loads in 1.3-3.3 s, down from 21-25 s while GitHub Pages was slow to this laptop.
 - **Latency:** ~180-220 ms per re-plan in Chrome on this laptop with the frameskip-4 model (vs ~800 ms with
   frameskip 1), and ~0.9 s with 4× CPU throttling as a phone stand-in. The live page loads in 3.4-7 s from this
   connection; the download is 2.8 MB of model (5.0 MB before the LayerNorm swap) plus 3.2 MB of ONNX Runtime.
@@ -94,8 +96,9 @@ extra long cross-room tasks it goes from 50% to 83% at 4 steps and from 83% to *
   model's, and the block position is encoded only to ~4 px. A longer planning horizon didn't help.
   Weaker SIGReg (λ = 0.01) made the model ignore the block: good prediction loss, useless for pushing (17%).
 - Later variants on the Kaggle T4: a LayerNorm projector on the same data scored 32%. Twice the data (90% pushing)
-  with LayerNorm and 12k steps scored 40%: short pushes 83%, long ones still 17%. The demo keeps the 39% model and
-  states that number on the page.
+  with LayerNorm and 12k steps scored 40%: short pushes 83%, long ones still 17%. Subgoals from a waypoint graph
+  of push frames didn't help either (31-35% vs 32% on the tuning tasks). The demo keeps the 39% model and states
+  that number on the page.
 
 ## Known limitations
 
