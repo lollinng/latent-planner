@@ -1,0 +1,1 @@
+{"method": "hybrid (true sim, latent cost)", "run": "runs/push_fs4_s0", "taskset": "tune", "n": 100, "cem": "K5xh4 S300 I10 rw1.0", "success": 0.86, "short": 1.0, "long": 0.8, "steps": 14.895348837209303, "final_block_px": 7.0010185712458055, "minutes": 13.6}

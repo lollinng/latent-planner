@@ -119,6 +119,7 @@ def main() -> None:
     ap.add_argument("--rollout", type=int, default=8, help="open-loop rollout steps in the prediction loss")
     ap.add_argument("--frameskip", type=int, default=1, help="env steps per predictor step (LeWM uses 5)")
     ap.add_argument("--pred-hidden", type=int, default=256)
+    ap.add_argument("--pred-layers", type=int, default=2, help="hidden layers in the predictor MLP")
     ap.add_argument("--proj-norm", choices=["bn", "ln"], default="bn", help="projector normalisation")
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--wd", type=float, default=1e-4)
@@ -151,7 +152,7 @@ def main() -> None:
           f"host peak RSS {data_mod.peak_rss_gb():.2f} GB", flush=True)
 
     cfg = ModelConfig(latent_dim=args.latent_dim, frameskip=args.frameskip, pred_hidden=args.pred_hidden,
-                      proj_norm=args.proj_norm)
+                      pred_layers=args.pred_layers, proj_norm=args.proj_norm)
     model = WorldModel(cfg).to(dev)
     sigreg = SIGReg(num_proj=args.num_proj).to(dev)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.wd)
