@@ -85,8 +85,7 @@ def main() -> None:
                   f"{pct(r['success_same'], r.get('success_same_std'))} | "
                   f"{pct(r['success_cross'], r.get('success_cross_std'))} | {r['steps']:.1f} | "
                   f"{', '.join(f'{x:.2f}' for x in r.get('per_seed', [])) or '-'} |")
-    md += ["", "Mean ± std over training seeds (one planning seed each). Baselines are deterministic in their task set "
-           "and run once.", ""]
+    md += ["", "Mean ± std over training seeds (one planning seed each). Baselines run once (seeded).", ""]
 
     if an is not None:
         md += ["## Probes (validation data; diagnostics, never used by the planner)", "",
@@ -122,16 +121,24 @@ def main() -> None:
     for ax, key, title in [(axes[0], "success_same", "Same room"), (axes[1], "success_cross", "Other room (through the door)")]:
         y = np.arange(len(rows))[::-1]
         vals = [r[key] * 100 for r in rows]
-        errs = [r.get(key + "_std", 0) * 100 if r.get(key + "_std") is not None else 0 for r in rows]
+        errs = [r.get(key + "_std") or 0.0 for r in rows]
         cols = [BLUE if r["ours"] else NEUTRAL for r in rows]
-        ax.barh(y, vals, xerr=errs, color=cols, height=0.62, error_kw={"ecolor": INK2, "lw": 1, "capsize": 2})
-        for yi, v in zip(y, vals):
-            ax.text(min(v + 2, 92), yi, f"{v:.0f}%", va="center", fontsize=9, color=INK)
+        ax.barh(y, vals, color=cols, height=0.62)
+        ax.tick_params(axis="y", length=0)
+        for yi, v, e, c in zip(y, vals, errs, cols):
+            if e > 0:
+                ax.errorbar(v, yi, xerr=e * 100, color=INK2, lw=1, capsize=2)
+            if v >= 88:  # label inside the bar end
+                ax.text(v - 2, yi, f"{v:.0f}%", va="center", ha="right", fontsize=9,
+                        color="white" if c == BLUE else INK)
+            else:
+                ax.text(v + e * 100 + 2, yi, f"{v:.0f}%", va="center", fontsize=9, color=INK)
         ax.set_xlim(0, 105)
         ax.set_title(title, fontsize=11, color=INK, loc="left")
         style(ax)
     axes[0].set_yticks(np.arange(len(rows))[::-1], [r["label"] for r in rows], fontsize=9, color=INK)
-    fig.suptitle("Goal-reaching success on 100 test tasks", fontsize=12, color=INK, x=0.01, ha="left")
+    fig.suptitle("Goal-reaching success on 100 test tasks (blue: ours; error bars: std over 3 training seeds)",
+                 fontsize=11, color=INK, x=0.01, ha="left")
     fig.tight_layout()
     fig.savefig(plots / "success.png", dpi=150)
     plt.close(fig)
@@ -155,6 +162,7 @@ def main() -> None:
         ax.grid(axis="y", color=GRID, lw=0.8)
         ax.set_xlabel("training step", fontsize=9, color=INK2)
     axes[1].legend(frameon=False, fontsize=8.5, loc="center right")
+    fig.suptitle("Training curves (bold: seed 0, thin: seeds 1-2)", fontsize=11, color=INK, x=0.01, ha="left")
     fig.tight_layout()
     fig.savefig(plots / "training.png", dpi=150)
     plt.close(fig)

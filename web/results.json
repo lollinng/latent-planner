@@ -1,0 +1,89 @@
+{
+ "rows": [
+  {
+   "label": "Latent CEM, LeWM-style (\u03bb=0.09)",
+   "ours": true,
+   "n_seeds": 3,
+   "success": 1.0,
+   "success_std": 0.0,
+   "success_same": 1.0,
+   "success_same_std": 0.0,
+   "success_cross": 1.0,
+   "success_cross_std": 0.0,
+   "steps": 10.35,
+   "sec_per_replan": 0.8102444308144706,
+   "per_seed": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "label": "Latent CEM, frameskip 4 (\u03bb=0.09)",
+   "ours": true,
+   "n_seeds": 3,
+   "success": 1.0,
+   "success_std": 0.0,
+   "success_same": 1.0,
+   "success_same_std": 0.0,
+   "success_cross": 1.0,
+   "success_cross_std": 0.0,
+   "steps": 9.353333333333333,
+   "sec_per_replan": 0.22642504807674524,
+   "per_seed": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  {
+   "label": "Latent CEM, no SIGReg (\u03bb=0)",
+   "ours": false,
+   "n_seeds": 3,
+   "success": 0.056666666666666664,
+   "success_std": 0.004714045207910314,
+   "success_same": 0.09999999999999999,
+   "success_same_std": 0.01632993161855452,
+   "success_cross": 0.013333333333333334,
+   "success_cross_std": 0.009428090415820633,
+   "steps": 16.2,
+   "sec_per_replan": 0.8422352534074049,
+   "per_seed": [
+    0.06,
+    0.06,
+    0.05
+   ]
+  },
+  {
+   "label": "Oracle CEM: true simulator, straight-line cost",
+   "ours": false,
+   "n_seeds": null,
+   "success": 0.87,
+   "success_same": 1.0,
+   "success_cross": 0.74,
+   "steps": 6.793103448275862,
+   "sec_per_replan": 5.765149354934692
+  },
+  {
+   "label": "Straight line to goal (true positions)",
+   "ours": false,
+   "n_seeds": null,
+   "success": 0.7,
+   "success_same": 1.0,
+   "success_cross": 0.4,
+   "steps": 5.585714285714285,
+   "sec_per_replan": 2.3016929626464845e-05
+  },
+  {
+   "label": "Random actions",
+   "ours": false,
+   "n_seeds": null,
+   "success": 0.11,
+   "success_same": 0.2,
+   "success_cross": 0.02,
+   "steps": 28.181818181818183,
+   "sec_per_replan": 1.194000244140625e-05
+  }
+ ],
+ "note": "100 fixed test tasks, half needing the door; success = within 4 px of the goal within 50 steps. Mean \u00b1 std over 3 training seeds. Oracle CEM plans with the true simulator but straight-line distance."
+}
