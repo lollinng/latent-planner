@@ -18,3 +18,4 @@ main,test,latent_cem,runs/lam0_s2,0.0,2,1,0.05,0.08,0.02,11.6,36.107958434306916
 main,test,latent_cem,runs/fs4_lam0.09_s0,0.09,0,4,1.0,1.0,1.0,9.28,2.7723335695719493,6,0.23157771428426108,K5xh4 S300 I10 E30 rw1.0 x1
 main,test,latent_cem,runs/fs4_lam0.09_s1,0.09,1,4,1.0,1.0,1.0,9.26,2.800308812069651,6,0.22669021288553873,K5xh4 S300 I10 E30 rw1.0 x1
 main,test,latent_cem,runs/fs4_lam0.09_s2,0.09,2,4,1.0,1.0,1.0,9.52,2.558257766734114,11,0.2210072170604359,K5xh4 S300 I10 E30 rw1.0 x1
+main,test,browser_cem,web/model (fs4_lam0.09_s0),,,4,0.99,1.0,0.98,9.242424242424242,2.885875976604114,,0.1722345730771724,"browser: {""knots"":5,""hold"":4,""samples"":300,""elites"":30,""iters"":10,""init_std"":1,""min_std"":0.05,""momentum"":0.1,""running_w"":1}"

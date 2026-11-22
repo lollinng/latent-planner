@@ -372,7 +372,7 @@ async function load() {
   const c = meta.cem, steps = (c.knots * c.hold) / meta.frameskip;
   ui.search.textContent = `${c.samples} plans × ${c.iters} rounds × ${steps} steps`;
   ui.backend.textContent = `ONNX Runtime Web ${ORT_VERSION}, wasm`;
-  window.__lp = { S, meta, planner }; // for automated tests
+  window.__lp = { S, meta, planner, E, Planner }; // for automated tests (tests/web_smoke.py, tests/web_eval.py)
   await setGoal(S.goal);
   $("loading").classList.add("done");
   S.ready = true;
