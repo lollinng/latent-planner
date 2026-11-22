@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -50,6 +51,9 @@ class RolloutExport(nn.Module):
         return torch.stack(zs, dim=1)
 
 
+FP16_TOL = 2e-2  # max abs latent error allowed from fp16 weight storage (latents have std ~1)
+
+
 def fp16_storage(path: Path, min_elems: int = 256) -> None:
     """Store large float32 weights as float16 followed by a Cast back to float32. Halves the download; ONNX
     Runtime folds the casts when the session is created, so the arithmetic stays float32."""
@@ -75,8 +79,13 @@ def fp16_storage(path: Path, min_elems: int = 256) -> None:
     onnx.save(m, str(path))
 
 
-def export(run: Path, out: Path, cem: CEMConfig, opset: int = 17, fp16: bool = True) -> dict:
-    out.mkdir(parents=True, exist_ok=True)
+def export(run: Path, final_out: Path, cem: CEMConfig, opset: int = 17, fp16: bool = True) -> dict:
+    # Write into a temp dir and only replace final_out once every check has passed, so a failed export never
+    # leaves the demo with mismatched files.
+    out = final_out.parent / (final_out.name + ".tmp")
+    if out.exists():
+        shutil.rmtree(out)
+    out.mkdir(parents=True)
     model = load_model(run / "model.pt", "cpu")
     D = model.cfg.latent_dim
     enc, ro = EncoderExport(model).eval(), RolloutExport(model, cem.hold).eval()
@@ -89,31 +98,45 @@ def export(run: Path, out: Path, cem: CEMConfig, opset: int = 17, fp16: bool = T
     torch.onnx.export(ro, (z0, knots), out / "rollout.onnx", input_names=["z0", "knots"], output_names=["zs"],
                       dynamic_axes={"z0": {0: "S"}, "knots": {0: "S"}, "zs": {0: "S"}}, **kw)
 
-    if fp16:
-        fp16_storage(out / "encoder.onnx")
-        fp16_storage(out / "rollout.onnx")
-
     # Parity: onnxruntime vs the float32 torch model on fresh inputs (different batch sizes than the export
-    # trace). fp16 weight storage moves latents (std ~1) by ~1e-3, so it gets a looser bound; planning with
-    # fp16-rounded weights was checked separately (same success on the tuning set, see LOG.md).
+    # trace). fp16 weight storage is kept per graph only if it stays within FP16_TOL: in some models the
+    # projector's BatchNorm sees features with tiny variance (running var ~1e-7) and amplifies fp16 rounding
+    # of the layers before it, so those graphs ship as float32.
     import onnxruntime as ort
 
     rng = np.random.default_rng(0)
     pos = np.stack([env.sample_free(rng) for _ in range(64)])
     f = env.render_batch(pos)
-    s_enc = ort.InferenceSession(str(out / "encoder.onnx"), providers=["CPUExecutionProvider"])
-    s_ro = ort.InferenceSession(str(out / "rollout.onnx"), providers=["CPUExecutionProvider"])
     with torch.no_grad():
         zt = enc(torch.from_numpy(f)).numpy()
         z0 = torch.from_numpy(zt[:50])
         kn = torch.from_numpy(rng.uniform(-1.2, 1.2, (50, cem.knots, 2)).astype(np.float32))
         rt = ro(z0, kn).numpy()
-    zo = s_enc.run(None, {"frames": f})[0]
-    ro_ = s_ro.run(None, {"z0": z0.numpy(), "knots": kn.numpy()})[0]
-    parity = {"encoder_max_abs": float(np.abs(zo - zt).max()), "rollout_max_abs": float(np.abs(ro_ - rt).max())}
-    tol = 2e-2 if fp16 else 1e-3
-    assert parity["encoder_max_abs"] < tol and parity["rollout_max_abs"] < tol, parity
-    parity["fp16_weight_storage"] = fp16
+
+    def ort_err(path: Path) -> float:
+        sess = ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])
+        if path.name.startswith("encoder"):
+            return float(np.abs(sess.run(None, {"frames": f})[0] - zt).max())
+        return float(np.abs(sess.run(None, {"z0": z0.numpy(), "knots": kn.numpy()})[0] - rt).max())
+
+    parity = {}
+    for name in ("encoder", "rollout"):
+        path = out / f"{name}.onnx"
+        e32 = ort_err(path)
+        assert e32 < 1e-3, f"{name}: float32 ONNX differs from torch by {e32}"
+        parity[f"{name}_fp32_max_abs"] = e32
+        parity[f"{name}_fp16_storage"] = False
+        if fp16:
+            tmp = out / f"{name}.fp16.onnx"
+            shutil.copy(path, tmp)
+            fp16_storage(tmp)
+            e16 = ort_err(tmp)
+            parity[f"{name}_fp16_max_abs"] = e16
+            if e16 < FP16_TOL:
+                tmp.replace(path)
+                parity[f"{name}_fp16_storage"] = True
+            else:
+                tmp.unlink()
 
     from sklearn.linear_model import Ridge
 
@@ -151,6 +174,9 @@ def export(run: Path, out: Path, cem: CEMConfig, opset: int = 17, fp16: bool = T
         "bytes": {p.name: p.stat().st_size for p in (out / "encoder.onnx", out / "rollout.onnx", out / "grid_z.bin")},
     }
     (out / "meta.json").write_text(json.dumps(meta))
+    if final_out.exists():
+        shutil.rmtree(final_out)
+    out.rename(final_out)
     return meta
 
 

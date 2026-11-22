@@ -24,8 +24,8 @@ def serve(port: int) -> None:
     threading.Thread(target=srv.serve_forever, daemon=True).start()
 
 
-def run(url: str, shots: Path, goals: int, engine: str) -> dict:
-    out = {"engine": engine}
+def run(url: str, shots: Path, goals: int, engine: str, cpu_throttle: float = 1.0) -> dict:
+    out = {"engine": engine, "cpu_throttle": cpu_throttle}
     with sync_playwright() as p:
         if engine == "chrome":
             browser = p.chromium.launch(channel="chrome", headless=True)
@@ -36,6 +36,8 @@ def run(url: str, shots: Path, goals: int, engine: str) -> dict:
                                       is_mobile=(name == "phone" and engine != "firefox"),
                                       has_touch=(name == "phone"))
             page = ctx.new_page()
+            if cpu_throttle > 1 and engine in ("chrome", "chromium"):  # rough stand-in for a slower phone CPU
+                ctx.new_cdp_session(page).send("Emulation.setCPUThrottlingRate", {"rate": cpu_throttle})
             errors = []
             page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
             page.on("pageerror", lambda e: errors.append(str(e)))
@@ -69,9 +71,10 @@ if __name__ == "__main__":
     ap.add_argument("--shots", default=str(ROOT / "results" / "screens"))
     ap.add_argument("--goals", type=int, default=3)
     ap.add_argument("--engine", default="chrome", choices=["chrome", "chromium", "webkit", "firefox"])
+    ap.add_argument("--cpu-throttle", type=float, default=1.0)
     a = ap.parse_args()
     if a.url is None:
         serve(a.port)
         a.url = f"http://127.0.0.1:{a.port}/"
     Path(a.shots).mkdir(parents=True, exist_ok=True)
-    print(json.dumps(run(a.url, Path(a.shots), a.goals, a.engine), indent=1))
+    print(json.dumps(run(a.url, Path(a.shots), a.goals, a.engine, a.cpu_throttle), indent=1))
