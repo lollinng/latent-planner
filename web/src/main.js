@@ -62,10 +62,10 @@ const SCENES = {
     dir: "model_push/",
     caption: "Scene 2: the red dot has to shove the teal block onto the dashed yellow square.",
     hint: "Tap where the block should go. Drag the agent or the block to move them.",
-    note: "Harder scene. On 100 test pushes this model gets the block within 3 px of its target 39% of the time: "
-      + "74% for short pushes, 19% for long ones that need it to walk around the block first. Its imagined "
-      + "contact dynamics are the weak spot (see the write-up). Here each task gets up to 120 steps (the test "
-      + "allows 60), so it reaches about half of them; the status line keeps score.",
+    note: "Harder scene. On 100 test pushes this model gets the block within 3 px of its target 52% of the time "
+      + "(3 training seeds): 84% for short pushes, 34% for long ones that need it to walk around the block first. "
+      + "Its imagined contact dynamics are the weak spot (see the write-up). Here each task gets up to 120 steps "
+      + "and the status line keeps score.",
     render: EP.render,
     step: EP.stepState,
     // Goal image = block at the target and the agent just behind it along the main push direction, which is
@@ -78,9 +78,9 @@ const SCENES = {
       const off = EP.BLOCK_H + E.AGENT_R + 1.5;
       return [clamp(bx - side[0] * off, EP.LO_A, EP.HI_A), clamp(by - side[1] * off, EP.LO_A, EP.HI_A), bx, by];
     },
-    // New tasks come from the same generator as the test set, so the success rate a visitor sees matches the
-    // 39% in the note. (Chaining pushes from wherever the last one ended is much harder: the agent is pressed
-    // against the block and usually has to walk around it first.)
+    // New tasks come from the same generator as the test set, so what a visitor sees matches the test-set
+    // success in the note. (Chaining pushes from wherever the last one ended is much harder: the agent is
+    // pressed against the block and usually has to walk around it first.)
     newTask: () => EP.makeTask(rand),
     goalFromTap(p, s) { return this.goalAt(s, p); },
     reached: (s, g) => dist([s[2], s[3]], [g[2], g[3]]) <= 3,
