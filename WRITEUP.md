@@ -199,6 +199,7 @@ image shows the agent where a pusher would be.
 | Method | Seeds | Success | Short push (< 20 px) | Long push | Steps (successes) | Per-seed |
 |---|---|---|---|---|---|---|
 | Latent CEM (λ=0.09, frameskip 4), in the demo | 3 | 39 ± 1% | 74 ± 0% | 19 ± 2% | 11.2 | 0.40, 0.37, 0.39 |
+| Same planner in the browser (JS + ONNX Runtime Web, push_fs4_s0) | 1 | 37% | 71% | 18% | 10.9 | 0.37 (Python: 0.40) |
 | Same, LayerNorm projector | 3 | 32 ± 3% | 58 ± 11% | 18 ± 2% | 10.7 | 0.35, 0.28, 0.33 |
 | LayerNorm, 2× data (90% pushing), 12k steps | 3 | 40 ± 0% | 83 ± 2% | 17 ± 1% | 9.4 | 0.40, 0.40, 0.40 |
 | Hand-written pusher (true positions) | - | 87% | 100% | 80% | 23.3 | - |
@@ -265,6 +266,14 @@ planner never uses it. The cost map uses precomputed embeddings of a 1 px grid o
 
 Tested headless in Chrome and WebKit at 1200×900 and 390×844 (`tests/web_smoke.py`): the page loads, plans and
 reaches goals with no horizontal overflow.
+
+Each demo task ends when it is reached or after 2× the eval budget (100 steps in two rooms, 120 for push), with a
+running score in the status line, and the demo moves on to a new task. Push tasks come from a JS port of the
+test-set generator (`makeTask` in `env_push.js`: random start, then 30 steps of the scripted pusher; same
+distribution of push lengths as the Python test set). Chaining each push from wherever the last one ended was much
+harder than the test set, because the agent ends every push pressed against the block: 0 of 12 chained tasks were
+reached. The push demo loop now reaches 31 of 64 tasks (48%) with its 120-step limit, and the browser planner scores
+37% on the 100 test tasks with the test's 60 steps (`tests/web_eval.py --scene push`).
 
 ## Limitations
 

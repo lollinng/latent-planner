@@ -99,6 +99,12 @@ extra long cross-room tasks it goes from 50% to 83% at 4 steps and from 83% to *
   with LayerNorm and 12k steps scored 40%: short pushes 83%, long ones still 17%. Subgoals from a waypoint graph
   of push frames didn't help either (31-35% vs 32% on the tuning tasks). The demo keeps the 39% model and states
   that number on the page.
+- **The push demo now behaves like the test.** Its browser planner scores 37% on the 100 test pushes (Python, same
+  model: 40%). Before this fix the demo chained each new push from wherever the last one ended, with the agent
+  pressed against the block, and when a push failed it kept trying forever: 0 of 12 chained tasks were reached in
+  a headless run. New tasks now come from the test-set generator (ported to JS; same distribution), and a task ends
+  after 120 steps with "Missed" and a running score. Measured in the real demo loop: 31 of 64 reached (48%; 120
+  steps vs the test's 60).
 
 ## Known limitations
 

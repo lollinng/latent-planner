@@ -124,3 +124,13 @@
   Live load 1.3-3.3 s (was 21-25 s). Push subgoals (waypoint graph over 13k push frames, fs4 s0, tuning tasks):
   default graph 391 components -> 0.32 (= plain); connected graphs 0.31 / 0.35 (long 0.23 / 0.27 vs 0.23):
   within noise, not run on test. Push gap is contact dynamics, not routing.
+- 13:57 Live check of both scenes (owner asked for the live demo). Two rooms fine (load 2.5 s alone; an earlier
+  20 s reading was two test browsers plus a stuck download sharing the line). Push demo had a real problem: it
+  chained each new push from where the last ended (agent pressed against the block) and never gave up on a missed
+  push, so it stalled: 0 of 12 chained tasks reached. Browser planner on the 100 push test tasks: 0.37 (Python,
+  same model: 0.40), so the planner port is fine. Fixes: push tasks from a JS port of the test-set generator
+  (makeTask; push-length distribution matches Python: median 25.9 vs 25.7 px, 66% long in both), a 2x-budget
+  give-up (100 / 120 steps) with "Missed" and a running score, and the loop now waits for the new goal's
+  embedding (it could plan one knot toward the old goal). Push demo loop: 31 of 64 reached (48%, 120 steps);
+  browser planner on 100 JS-generated tasks: 0.30 (60 steps; within noise of 0.37). Two rooms: 8 of 8.
+  Colab still not signed in (no browser tools in this session; WSL Chrome has no Google sign-in).
