@@ -26,6 +26,7 @@ class ModelConfig:
     act_emb: int = 32
     pred_hidden: int = 256
     pred_layers: int = 2
+    frameskip: int = 1  # env steps per predictor step; the predictor sees the k-step action chunk (2k values)
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -61,11 +62,11 @@ class Encoder(nn.Module):
 
 
 class Predictor(nn.Module):
-    """z_{t+1} = z_t + MLP([z_t, emb(a_t)])."""
+    """z_{t+k} = z_t + MLP([z_t, emb(a_t..a_{t+k-1})]), k = cfg.frameskip."""
 
     def __init__(self, cfg: ModelConfig):
         super().__init__()
-        self.act = nn.Sequential(nn.Linear(2, cfg.act_emb), nn.SiLU(), nn.Linear(cfg.act_emb, cfg.act_emb))
+        self.act = nn.Sequential(nn.Linear(2 * cfg.frameskip, cfg.act_emb), nn.SiLU(), nn.Linear(cfg.act_emb, cfg.act_emb))
         layers, d_in = [], cfg.latent_dim + cfg.act_emb
         for _ in range(cfg.pred_layers):
             layers += [nn.Linear(d_in, cfg.pred_hidden), nn.LayerNorm(cfg.pred_hidden), nn.GELU()]
@@ -128,7 +129,7 @@ class WorldModel(nn.Module):
 
     @torch.no_grad()
     def rollout(self, z0: torch.Tensor, actions: torch.Tensor) -> torch.Tensor:
-        """z0 (B, D), actions (B, H, 2) -> predicted latents (B, H, D) for steps 1..H."""
+        """z0 (B, D), actions (B, H, 2k) -> predicted latents (B, H, D) for predictor steps 1..H."""
         zs, z = [], z0
         for t in range(actions.shape[1]):
             z = self.predictor(z, actions[:, t])
@@ -138,7 +139,7 @@ class WorldModel(nn.Module):
 
 def jepa_loss(model: WorldModel, sigreg: SIGReg, frames: torch.Tensor, actions: torch.Tensor, lam: float,
               rollout_steps: int = 1) -> dict[str, torch.Tensor]:
-    """frames (B, T+1, 64, 64, 3) uint8, actions (B, T, 2).
+    """frames (B, T+1, 64, 64, 3) uint8 (already subsampled by frameskip), actions (B, T, 2k).
 
     Prediction loss: teacher-forced one-step predictions for every t, plus (if rollout_steps > 1) open-loop
     rollouts of up to rollout_steps steps from every start, which keeps long planning rollouts on track.
@@ -175,7 +176,7 @@ def count_params(m: nn.Module) -> int:
 
 def predictor_macs(cfg: ModelConfig) -> int:
     d_in = cfg.latent_dim + cfg.act_emb
-    macs = 2 * cfg.act_emb + cfg.act_emb * cfg.act_emb
+    macs = 2 * cfg.frameskip * cfg.act_emb + cfg.act_emb * cfg.act_emb
     for _ in range(cfg.pred_layers):
         macs += d_in * cfg.pred_hidden
         d_in = cfg.pred_hidden

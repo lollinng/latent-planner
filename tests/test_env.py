@@ -33,3 +33,14 @@ def test_dynamics_stay_in_free_space():
     for _ in range(2000):
         p = env.step_pos(p, rng.uniform(-1, 1, 2))
         assert env.is_free(p[0], p[1])
+
+
+def test_step_pos_batch_matches_scalar():
+    rng = np.random.default_rng(2)
+    pos = np.stack([env.sample_free(rng) for _ in range(500)])
+    for _ in range(30):
+        act = rng.uniform(-1.3, 1.3, (500, 2))
+        nb = env.step_pos_batch(pos, act)
+        ns = np.stack([env.step_pos(pos[k], act[k]) for k in range(500)])
+        assert np.array_equal(nb, ns)
+        pos = nb

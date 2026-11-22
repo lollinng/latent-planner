@@ -33,32 +33,44 @@ def to_gpu_uint8(data_dir: str, device: str, chunk: int = 100) -> torch.Tensor:
     return out
 
 
-class WindowSampler:
-    """Random windows of length T+1 frames / T actions from GPU-resident episodes."""
+def chunk_actions(actions: torch.Tensor, fs: int) -> torch.Tensor:
+    """(..., T*fs, 2) per-env-step actions -> (..., T, 2*fs) action chunks."""
+    *lead, n, _ = actions.shape
+    return actions.reshape(*lead, n // fs, 2 * fs)
 
-    def __init__(self, frames: torch.Tensor, actions: torch.Tensor, pos: torch.Tensor, T: int):
-        self.frames, self.actions, self.pos, self.T = frames, actions, pos, T
+
+class WindowSampler:
+    """Random windows of T predictor steps (T*fs env steps) from GPU-resident episodes."""
+
+    def __init__(self, frames: torch.Tensor, actions: torch.Tensor, pos: torch.Tensor, T: int, fs: int = 1):
+        self.frames, self.actions, self.pos, self.T, self.fs = frames, actions, pos, T, fs
         self.E, self.L = frames.shape[0], frames.shape[1]  # L = steps + 1
+        assert T * fs < self.L, "window longer than an episode"
 
     def sample(self, B: int, gen: torch.Generator):
         dev = self.frames.device
         e = torch.randint(0, self.E, (B,), device=dev, generator=gen)
-        t0 = torch.randint(0, self.L - self.T, (B,), device=dev, generator=gen)
-        tt = t0[:, None] + torch.arange(self.T + 1, device=dev)[None]
+        t0 = torch.randint(0, self.L - self.T * self.fs, (B,), device=dev, generator=gen)
+        tt = t0[:, None] + torch.arange(self.T + 1, device=dev)[None] * self.fs
+        ta = t0[:, None] + torch.arange(self.T * self.fs, device=dev)[None]
         f = self.frames[e[:, None], tt]  # (B, T+1, 64, 64, 3)
-        a = self.actions[e[:, None], tt[:, :-1]]  # (B, T, 2)
+        a = chunk_actions(self.actions[e[:, None], ta], self.fs)  # (B, T, 2*fs)
         p = self.pos[e[:, None], tt]
         return f, a, p
 
 
 @torch.no_grad()
-def evaluate(model: WorldModel, frames: torch.Tensor, actions: torch.Tensor, horizon: int, n_ep: int = 200) -> dict:
+def evaluate(model: WorldModel, frames: torch.Tensor, actions: torch.Tensor, env_horizon: int = 16,
+             n_ep: int = 200) -> dict:
     """Open-loop rollout error on validation episodes: encode frame 0, roll the predictor through the logged
     actions, compare with the encoding of each true frame. Reported normalised by the latent variance, so
-    1.0 means "no better than predicting the mean embedding"."""
+    1.0 means "no better than predicting the mean embedding". Entry h of the list is predictor step h+1,
+    i.e. env step (h+1)*frameskip."""
     model.eval()
-    z = torch.cat([model.encode(frames[i : min(i + 25, n_ep), : horizon + 1]) for i in range(0, n_ep, 25)])
-    zhat = model.rollout(z[:, 0], actions[:n_ep, :horizon])  # z: (N, H+1, D)
+    fs = model.cfg.frameskip
+    H = env_horizon // fs
+    z = torch.cat([model.encode(frames[i : min(i + 25, n_ep), : H * fs + 1 : fs]) for i in range(0, n_ep, 25)])
+    zhat = model.rollout(z[:, 0], chunk_actions(actions[:n_ep, : H * fs], fs))  # z: (N, H+1, D)
     var = z.reshape(-1, z.shape[-1]).var(0).sum()
     err = (zhat - z[:, 1:]).pow(2).sum(-1).mean(0) / var  # (H,)
     zall = z.reshape(-1, z.shape[-1])
@@ -98,8 +110,10 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--steps", type=int, default=6000)
     ap.add_argument("--batch", type=int, default=64)
-    ap.add_argument("--T", type=int, default=8, help="window length in transitions")
+    ap.add_argument("--T", type=int, default=8, help="window length in predictor steps")
     ap.add_argument("--rollout", type=int, default=8, help="open-loop rollout steps in the prediction loss")
+    ap.add_argument("--frameskip", type=int, default=1, help="env steps per predictor step (LeWM uses 5)")
+    ap.add_argument("--pred-hidden", type=int, default=256)
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--wd", type=float, default=1e-4)
     ap.add_argument("--latent-dim", type=int, default=32)
@@ -126,11 +140,11 @@ def main() -> None:
     actions = torch.from_numpy(np.load(Path(args.train) / "actions.npy")).to(dev)
     vactions = torch.from_numpy(np.load(Path(args.val) / "actions.npy")).to(dev)
     pos = torch.from_numpy(np.load(Path(args.train) / "pos.npy")).to(dev)
-    sampler = WindowSampler(frames, actions, pos, args.T)
+    sampler = WindowSampler(frames, actions, pos, args.T, args.frameskip)
     print(f"data on {dev}: {tuple(frames.shape)} in {time.time() - t_load:.1f}s, "
           f"host peak RSS {data_mod.peak_rss_gb():.2f} GB", flush=True)
 
-    cfg = ModelConfig(latent_dim=args.latent_dim)
+    cfg = ModelConfig(latent_dim=args.latent_dim, frameskip=args.frameskip, pred_hidden=args.pred_hidden)
     model = WorldModel(cfg).to(dev)
     sigreg = SIGReg(num_proj=args.num_proj).to(dev)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.wd)
@@ -142,7 +156,7 @@ def main() -> None:
     print(f"params: encoder {count_params(model.encoder):,}, predictor {count_params(model.predictor):,}", flush=True)
 
     fields = ["step", "loss", "pred", "sigreg", "lr", "train_eff_rank", "val_eff_rank", "val_z_std",
-              "val_nmse_h1", "val_nmse_h4", "val_nmse_h8", "val_nmse_h16", "sec"]
+              "val_nmse_m1", "val_nmse_e4", "val_nmse_e8", "val_nmse_e16", "sec"]
     logf = open(out / "log.csv", "w", newline="")
     log = csv.DictWriter(logf, fieldnames=fields)
     log.writeheader()
@@ -164,13 +178,14 @@ def main() -> None:
                 model.eval()
                 ztr = model.encode(f[:, 0])
                 model.train()
-            ev = evaluate(model, vframes, vactions, horizon=16)
+            ev = evaluate(model, vframes, vactions, env_horizon=16)
             nm = ev["val_rollout_nmse"]
+            fs = args.frameskip
             row = {"step": step, "loss": acc["loss"] / acc["n"], "pred": acc["pred"] / acc["n"],
                    "sigreg": acc["sigreg"] / acc["n"], "lr": sched.get_last_lr()[0],
                    "train_eff_rank": effective_rank(ztr), "val_eff_rank": ev["val_eff_rank"],
-                   "val_z_std": ev["val_z_std"], "val_nmse_h1": nm[0], "val_nmse_h4": nm[3], "val_nmse_h8": nm[7],
-                   "val_nmse_h16": nm[15], "sec": time.time() - t0}
+                   "val_z_std": ev["val_z_std"], "val_nmse_m1": nm[0], "val_nmse_e4": nm[4 // fs - 1],
+                   "val_nmse_e8": nm[8 // fs - 1], "val_nmse_e16": nm[16 // fs - 1], "sec": time.time() - t0}
             log.writerow(row)
             logf.flush()
             print(" ".join(f"{k}={v:.4g}" if isinstance(v, float) else f"{k}={v}" for k, v in row.items()), flush=True)
@@ -178,7 +193,7 @@ def main() -> None:
     logf.close()
 
     torch.save({"cfg": cfg.to_dict(), "state_dict": model.state_dict(), "args": vars(args)}, out / "model.pt")
-    ev = evaluate(model, vframes, vactions, horizon=16)
+    ev = evaluate(model, vframes, vactions, env_horizon=16)
     del frames, vframes
     torch.cuda.empty_cache()
     summary = {"args": vars(args), "cfg": cfg.to_dict(), **ev, **position_probe(model, args.train, args.val, dev),

@@ -177,3 +177,40 @@ def geodesic_dist(a: np.ndarray, b: np.ndarray) -> float:
     if room_of(a[0]) == room_of(b[0]) or (DOOR_Y0 + AGENT_R <= a[1] <= DOOR_Y1 - AGENT_R and abs(a[0] - 32) < 5):
         return float(np.linalg.norm(a - b))
     return float(np.linalg.norm(a - DOOR_CENTER) + np.linalg.norm(DOOR_CENTER - b))
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Vectorised dynamics (used by the oracle-CEM baseline, which plans with the true simulator)
+# ---------------------------------------------------------------------------------------------------------------
+
+def _first_overlap_batch(x: np.ndarray, y: np.ndarray) -> np.ndarray:
+    r = AGENT_R
+    hit = ((x[:, None] + r > WALLS[None, :, 0]) & (x[:, None] - r < WALLS[None, :, 2])
+           & (y[:, None] + r > WALLS[None, :, 1]) & (y[:, None] - r < WALLS[None, :, 3]))
+    return np.where(hit.any(1), hit.argmax(1), -1)
+
+
+def step_pos_batch(pos: np.ndarray, action: np.ndarray) -> np.ndarray:
+    """Same dynamics as step_pos for many states at once. pos (M, 2), action (M, 2) -> (M, 2)."""
+    x = pos[:, 0].astype(np.float64).copy()
+    y = pos[:, 1].astype(np.float64).copy()
+    a = np.clip(action.astype(np.float64), -1.0, 1.0)
+    dx = a[:, 0] * SPEED / SUBSTEPS
+    dy = a[:, 1] * SPEED / SUBSTEPS
+    r = AGENT_R
+    for _ in range(SUBSTEPS):
+        nx = x + dx
+        i = _first_overlap_batch(nx, y)
+        m = i >= 0
+        if m.any():
+            w = WALLS[i[m]]
+            nx[m] = np.where(dx[m] > 0, w[:, 0] - r, w[:, 2] + r)
+        x = nx
+        ny = y + dy
+        i = _first_overlap_batch(x, ny)
+        m = i >= 0
+        if m.any():
+            w = WALLS[i[m]]
+            ny[m] = np.where(dy[m] > 0, w[:, 1] - r, w[:, 3] + r)
+        y = ny
+    return np.stack([x, y], axis=1)
