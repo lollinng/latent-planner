@@ -59,16 +59,23 @@
 
   <section class="explain">
     <h2>How it works</h2>
+    <p>A <strong>world model</strong> is a network that answers “if I take this action, what happens next?”. A
+      language model predicts the next token from the tokens so far; a world model predicts the next state of a
+      world from the current state and an action. Nobody told this one where the walls are or where the dot is. It
+      only watched 98,000 frames of the dot wandering at random.</p>
     <ol class="steps">
-      <li><strong>Learn.</strong> From 2,000 random trajectories (98k frames), an encoder maps each 64×64 frame to a
-        32-number embedding, and a predictor learns to guess the next embedding from the current one and the action.
-        The loss is the LeWM / LeJEPA recipe: next-embedding error plus SIGReg, a term that keeps embeddings spread
-        like a Gaussian so they can't collapse. No pixels are ever reconstructed.</li>
-      <li><strong>Imagine.</strong> To plan, the browser samples hundreds of action sequences and runs the predictor
-        forward 20 steps for each, entirely in embedding space.</li>
-      <li><strong>Choose.</strong> The cross-entropy method keeps the sequences whose imagined embeddings get
-        closest to the goal image's embedding, refines them for a few rounds, executes the first 4 steps, then plans
-        again from the new frame.</li>
+      <li><strong>Learn.</strong> An encoder (like the encoder half of an encoder–decoder) turns each 64×64 frame
+        into 32 numbers, its <em>embedding</em>. A small predictor learns to guess the next frame's embedding from
+        the current embedding and the action. There is no decoder: it never draws pictures, it only predicts
+        embeddings. That invites a lazy shortcut, giving every frame the same embedding so prediction is trivially
+        perfect (“collapse”), so a second loss term, SIGReg, keeps the embeddings spread out like a bell curve.
+        Without it, planning succeeds 6% of the time instead of 100%.</li>
+      <li><strong>Imagine.</strong> To choose a move, the browser guesses 300 action sequences and uses the
+        predictor to imagine where each one leads, 20 steps ahead, entirely in embedding space.</li>
+      <li><strong>Choose.</strong> It keeps the sequences whose imagined end lands closest to the goal picture's
+        embedding, guesses again around those, and repeats 10 times (the cross-entropy method). It executes the
+        first 4 steps of the best plan, looks at the new frame, and plans again, like a GPS recalculating. There
+        are no rewards and no trained policy: just a learned simulator and search.</li>
     </ol>
     <p>The dotted path is decoded with a linear read-out fitted after training, only to draw it; the planner never
       sees positions. Turn on the cost map to see what the planner optimises: distance in embedding space is a sharp
