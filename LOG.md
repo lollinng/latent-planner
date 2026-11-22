@@ -56,12 +56,15 @@
 - 06:40 Export bug: fp16 storage broke the fs4 encoder (0.07 max error; projector BatchNorm running var ~1e-7
   amplifies upstream rounding) and the failed export had already overwritten web/model. Now atomic (temp dir) and
   fp16 is kept per graph only if ORT parity < 2e-2: fs4 s0 ships fp32 encoder (4.4 MB) + fp16 rollout (0.2 MB).
-- 06:49-07:00 Test-set results (100 fixed tasks; planner settings locked from the tuning set):
+- 06:49-06:53 Test-set results (100 fixed tasks; planner settings locked from the tuning set):
   lam 0.09 frameskip 1: 1.00 / 1.00 / 1.00 success (3 seeds), 10.1-10.7 steps; frameskip 4: 1.00 x3, 9.3-9.5 steps,
   ~225 ms/replan batched; lam 0: 0.06 / 0.06 / 0.05 (other room 0.00-0.02). Probes: surprise AUROC 1.00 (fs1),
   0.997 (fs4), 0.53 (lam 0, chance); latent-vs-geodesic Spearman 0.36 (fs1), 0.50 (fs4); basin 12 px / ~15 px.
-- 07:00 Training curves show val rollout error stuck at 10-100 for 2/3 fs1 seeds and 3/3 fs4 seeds until the last
+- 06:53 Training curves show val rollout error stuck at 10-100 for 2/3 fs1 seeds and 3/3 fs4 seeds until the last
   ~1500 steps of the cosine schedule (eval-mode BatchNorm with running var 1e-7..7e-5). All final models good, but
   noted as a finding/limitation in WRITEUP.md.
-- 07:02 RESULTS.md, plots, web/results.json, WRITEUP.md and README filled from the logged CSVs. Demo model:
+- 06:54 RESULTS.md, plots, web/results.json, WRITEUP.md and README filled from the logged CSVs. Demo model:
   fs4 lam 0.09 seed 0 (5.0 MB). GIF recorded (docs/demo.gif, 0.76 MB).
+- 06:55 Browser planner evaluated on the 100 test tasks in headless Chrome (tests/web_eval.py: cem.js + ORT-web +
+  env.js, same rule and budget): 0.99 (same 1.00, other 0.98), 9.2 steps, 172 ms/replan. The miss (task 35) has its
+  goal in the doorway corner (x 33.9, y 45.1); agent ended 8.7 px away. Reported as its own row.
