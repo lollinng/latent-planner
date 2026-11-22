@@ -1,0 +1,83 @@
+tag,taskset,method,run,lam,seed,frameskip,success,success_same,success_cross,mean_steps_success,final_dist_px,replans,sec_per_replan,cem
+horizon_K2,test,latent_cem,runs/fs4_lam0.09_s0,0.09,0,4,0.99,1.0,0.98,8.252525252525253,2.39598115583261,13,0.2740927292750432,K2xh4 S300 I10 E30 rw1.0 x1
+horizon_K2,test,latent_cem,runs/fs4_lam0.09_s1,0.09,1,4,0.99,1.0,0.98,7.6767676767676765,2.4965066071046293,13,0.24158563980689415,K2xh4 S300 I10 E30 rw1.0 x1
+horizon_K2,test,latent_cem,runs/fs4_lam0.09_s2,0.09,2,4,1.0,1.0,1.0,7.89,2.1690903349821236,11,0.2414961944926869,K2xh4 S300 I10 E30 rw1.0 x1
+horizon_K3,test,latent_cem,runs/fs4_lam0.09_s0,0.09,0,4,0.98,1.0,0.96,8.081632653061224,2.667552132826872,13,0.3839280972113976,K3xh4 S300 I10 E30 rw1.0 x1
+horizon_K3,test,latent_cem,runs/fs4_lam0.09_s1,0.09,1,4,0.99,1.0,0.98,8.363636363636363,2.3205728813131987,13,0.3596171599168044,K3xh4 S300 I10 E30 rw1.0 x1
+horizon_K3,test,latent_cem,runs/fs4_lam0.09_s2,0.09,2,4,0.99,1.0,0.98,8.424242424242424,2.229008125661873,13,0.3567907443413368,K3xh4 S300 I10 E30 rw1.0 x1
+horizon_K5,test,latent_cem,runs/fs4_lam0.09_s0,0.09,0,4,1.0,1.0,1.0,9.28,2.7723335695719493,6,0.6281191905339559,K5xh4 S300 I10 E30 rw1.0 x1
+horizon_K5,test,latent_cem,runs/fs4_lam0.09_s1,0.09,1,4,1.0,1.0,1.0,9.26,2.800308812069651,6,0.5894760688145956,K5xh4 S300 I10 E30 rw1.0 x1
+horizon_K5,test,latent_cem,runs/fs4_lam0.09_s2,0.09,2,4,1.0,1.0,1.0,9.52,2.558257766734114,11,0.5813825997439298,K5xh4 S300 I10 E30 rw1.0 x1
+check_plain_K2,test,latent_cem,runs/fs4_lam0.09_s0,0.09,0,4,0.99,1.0,0.98,8.252525252525253,2.39598115583261,13,0.26402919109051043,K2xh4 S300 I10 E30 rw1.0 x1
+plain_K1,test,latent_cem,runs/fs4_lam0.09_s0,0.09,0,4,0.77,0.9,0.64,8.519480519480519,9.195691663561536,13,0.15255667613102838,K1xh4 S300 I10 E30 rw1.0 x1
+plain_K1,test,latent_cem,runs/fs4_lam0.09_s1,0.09,1,4,0.85,0.86,0.84,8.458823529411765,7.22008503087274,13,0.13252414189852202,K1xh4 S300 I10 E30 rw1.0 x1
+plain_K1,test,latent_cem,runs/fs4_lam0.09_s2,0.09,2,4,0.8,0.88,0.72,7.4875,8.566428295552301,13,0.13313348476703352,K1xh4 S300 I10 E30 rw1.0 x1
+subgoal_K1,test,latent_cem_subgoal,runs/fs4_lam0.09_s0,0.09,0,4,0.49,0.68,0.3,15.081632653061224,16.030993197404975,13,0.18329132520235503,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K1,test,latent_cem_subgoal,runs/fs4_lam0.09_s1,0.09,1,4,0.43,0.66,0.2,14.279069767441861,15.182615742799923,13,0.16623713419987604,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K1,test,latent_cem_subgoal,runs/fs4_lam0.09_s2,0.09,2,4,0.41,0.64,0.18,15.585365853658537,15.740857589356901,13,0.17200161860539362,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K2,test,latent_cem_subgoal,runs/fs4_lam0.09_s0,0.09,0,4,1.0,1.0,1.0,7.93,2.0802234265508535,6,0.3044827381769816,K2xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K2,test,latent_cem_subgoal,runs/fs4_lam0.09_s1,0.09,1,4,1.0,1.0,1.0,7.93,2.054772303349485,5,0.2697152137756348,K2xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K2,test,latent_cem_subgoal,runs/fs4_lam0.09_s2,0.09,2,4,1.0,1.0,1.0,7.92,1.969564366409023,6,0.2582021951675415,K2xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K3,test,latent_cem_subgoal,runs/fs4_lam0.09_s0,0.09,0,4,0.99,1.0,0.98,8.0,2.283092301445426,13,0.3948549674107478,K3xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K3,test,latent_cem_subgoal,runs/fs4_lam0.09_s1,0.09,1,4,0.99,1.0,0.98,7.959595959595959,2.4147943692616507,13,0.383251612003033,K3xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K3,test,latent_cem_subgoal,runs/fs4_lam0.09_s2,0.09,2,4,0.99,1.0,0.98,8.242424242424242,2.271280716523852,13,0.382263000194843,K3xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K5,test,latent_cem_subgoal,runs/fs4_lam0.09_s0,0.09,0,4,1.0,1.0,1.0,9.28,2.7588963988893345,6,0.6394211053848267,K5xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K5,test,latent_cem_subgoal,runs/fs4_lam0.09_s1,0.09,1,4,1.0,1.0,1.0,9.27,2.7624035647699885,6,0.6135857502619425,K5xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K5,test,latent_cem_subgoal,runs/fs4_lam0.09_s2,0.09,2,4,1.0,1.0,1.0,9.53,2.5491370585385495,11,0.6033633622256193,K5xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+plain_K1,far,latent_cem,runs/fs4_lam0.09_s0,0.09,0,4,0.54,nan,0.54,19.35185185185185,18.08180976554792,13,0.14384625508235052,K1xh4 S300 I10 E30 rw1.0 x1
+plain_K1,far,latent_cem,runs/fs4_lam0.09_s1,0.09,1,4,0.51,nan,0.51,19.313725490196077,20.595915103461635,13,0.13572724048907941,K1xh4 S300 I10 E30 rw1.0 x1
+plain_K1,far,latent_cem,runs/fs4_lam0.09_s2,0.09,2,4,0.46,nan,0.46,19.76086956521739,22.009859293857254,13,0.13565395428584173,K1xh4 S300 I10 E30 rw1.0 x1
+subgoal_K1,far,latent_cem_subgoal,runs/fs4_lam0.09_s0,0.09,0,4,0.01,nan,0.01,24.0,34.7735449060355,13,0.20178831540621245,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K1,far,latent_cem_subgoal,runs/fs4_lam0.09_s1,0.09,1,4,0.01,nan,0.01,44.0,35.21382106150293,13,0.17892626615671012,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K1,far,latent_cem_subgoal,runs/fs4_lam0.09_s2,0.09,2,4,0.03,nan,0.03,40.0,35.02330606532681,13,0.1775826490842379,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+plain_K2,far,latent_cem,runs/fs4_lam0.09_s0,0.09,0,4,0.79,nan,0.79,18.050632911392405,10.148903864824783,13,0.2650918593773475,K2xh4 S300 I10 E30 rw1.0 x1
+plain_K2,far,latent_cem,runs/fs4_lam0.09_s1,0.09,1,4,0.88,nan,0.88,18.545454545454547,6.5473436789221635,13,0.26058292388916016,K2xh4 S300 I10 E30 rw1.0 x1
+plain_K2,far,latent_cem,runs/fs4_lam0.09_s2,0.09,2,4,0.83,nan,0.83,17.951807228915662,9.23205535227594,13,0.25930147904616135,K2xh4 S300 I10 E30 rw1.0 x1
+subgoal_K2,far,latent_cem_subgoal,runs/fs4_lam0.09_s0,0.09,0,4,0.95,nan,0.95,18.147368421052633,3.9069112799182024,13,0.28658573444073016,K2xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K2,far,latent_cem_subgoal,runs/fs4_lam0.09_s1,0.09,1,4,0.95,nan,0.95,17.442105263157895,4.1952746802754355,13,0.2678994765648475,K2xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K2,far,latent_cem_subgoal,runs/fs4_lam0.09_s2,0.09,2,4,0.96,nan,0.96,18.041666666666668,3.6494454584822296,13,0.2685542106628418,K2xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+plain_K3,far,latent_cem,runs/fs4_lam0.09_s0,0.09,0,4,0.94,nan,0.94,17.617021276595743,5.023271552547681,13,0.38225406866807204,K3xh4 S300 I10 E30 rw1.0 x1
+plain_K3,far,latent_cem,runs/fs4_lam0.09_s1,0.09,1,4,0.92,nan,0.92,17.98913043478261,4.827460353799085,13,0.3698668663318341,K3xh4 S300 I10 E30 rw1.0 x1
+plain_K3,far,latent_cem,runs/fs4_lam0.09_s2,0.09,2,4,0.96,nan,0.96,17.21875,4.219692616531651,13,0.3697336453657884,K3xh4 S300 I10 E30 rw1.0 x1
+subgoal_K3,far,latent_cem_subgoal,runs/fs4_lam0.09_s0,0.09,0,4,0.99,nan,0.99,16.353535353535353,2.908437888000868,13,0.39025246180020845,K3xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K3,far,latent_cem_subgoal,runs/fs4_lam0.09_s1,0.09,1,4,0.99,nan,0.99,16.04040404040404,2.8958148584573355,13,0.38138554646418643,K3xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K3,far,latent_cem_subgoal,runs/fs4_lam0.09_s2,0.09,2,4,0.98,nan,0.98,16.744897959183675,3.374754354264376,13,0.3812846403855544,K3xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+plain_K5,far,latent_cem,runs/fs4_lam0.09_s0,0.09,0,4,1.0,nan,1.0,17.98,2.5348467637671686,10,0.6277613878250122,K5xh4 S300 I10 E30 rw1.0 x1
+plain_K5,far,latent_cem,runs/fs4_lam0.09_s1,0.09,1,4,0.98,nan,0.98,18.908163265306122,3.4165885487502856,13,0.6196662829472468,K5xh4 S300 I10 E30 rw1.0 x1
+plain_K5,far,latent_cem,runs/fs4_lam0.09_s2,0.09,2,4,0.99,nan,0.99,18.444444444444443,3.097726580866389,13,0.6162353112147405,K5xh4 S300 I10 E30 rw1.0 x1
+subgoal_K5,far,latent_cem_subgoal,runs/fs4_lam0.09_s0,0.09,0,4,1.0,nan,1.0,17.96,2.5030813010943844,10,0.6134197473526001,K5xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K5,far,latent_cem_subgoal,runs/fs4_lam0.09_s1,0.09,1,4,0.98,nan,0.98,19.040816326530614,3.418266294477495,13,0.6107890422527606,K5xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+subgoal_K5,far,latent_cem_subgoal,runs/fs4_lam0.09_s2,0.09,2,4,0.98,nan,0.98,18.397959183673468,3.4812032831059416,13,0.6124041814070481,K5xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25
+plain_K1,tune,latent_cem,runs/fs4_lam0.09_s0,0.09,0,4,0.84,0.88,0.8,8.428571428571429,7.293771429822855,13,0.1538071082188533,K1xh4 S300 I10 E30 rw1.0 x1
+plain_K1,tune,latent_cem,runs/fs4_lam0.09_s1,0.09,1,4,0.8,0.88,0.72,8.05,8.194720075243204,13,0.13016249583317682,K1xh4 S300 I10 E30 rw1.0 x1
+plain_K1,tune,latent_cem,runs/fs4_lam0.09_s2,0.09,2,4,0.84,0.86,0.82,8.976190476190476,7.739614782125935,13,0.1304475344144381,K1xh4 S300 I10 E30 rw1.0 x1
+subgoal_K1,tune,latent_cem_subgoal,runs/fs4_lam0.09_s0,0.09,0,4,0.39,0.6,0.18,14.307692307692308,16.814332118109633,13,0.18671613473158616,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=within
+subgoal_K1,tune,latent_cem_subgoal,runs/fs4_lam0.09_s1,0.09,1,4,0.44,0.66,0.22,15.840909090909092,16.245445259542876,13,0.17131735728337213,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=within
+subgoal_K1,tune,latent_cem_subgoal,runs/fs4_lam0.09_s2,0.09,2,4,0.43,0.7,0.16,13.465116279069768,16.479294948641733,13,0.16660776505103478,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=within
+subgoal_beyond_K1,tune,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s0,0.09,0,4,0.92,1.0,0.84,8.41304347826087,4.6171848096288075,13,0.17304526842557466,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K1,tune,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s1,0.09,1,4,0.97,1.0,0.94,8.917525773195877,3.1239580883224902,13,0.15095039514394906,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K1,tune,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s2,0.09,2,4,0.97,1.0,0.94,9.195876288659793,3.2976496215419786,13,0.1509852959559514,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K1,test,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s0,0.09,0,4,0.96,1.0,0.92,8.239583333333334,3.6121151604903416,13,0.19001282178438628,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K1,test,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s1,0.09,1,4,0.98,1.0,0.96,8.60204081632653,2.9921933504661204,13,0.17043346625107986,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K1,test,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s2,0.09,2,4,0.99,1.0,0.98,8.696969696969697,2.524448414581859,13,0.19357996720534104,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K2,test,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s0,0.09,0,4,1.0,1.0,1.0,7.56,2.199179129233498,5,0.5223594188690186,K2xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K2,test,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s1,0.09,1,4,1.0,1.0,1.0,7.51,2.3532448048261223,5,0.45007762908935545,K2xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K2,test,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s2,0.09,2,4,1.0,1.0,1.0,7.52,2.1687976572727394,5,0.44734368324279783,K2xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K3,test,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s0,0.09,0,4,0.99,1.0,0.98,8.16161616161616,2.386801614768452,13,0.6338224961207464,K3xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K3,test,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s1,0.09,1,4,0.99,1.0,0.98,8.1010101010101,2.3137336054876503,13,0.6438729212834284,K3xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K3,test,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s2,0.09,2,4,0.99,1.0,0.98,8.212121212121213,2.317987788793869,13,0.6490137393657978,K3xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K5,test,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s0,0.09,0,4,1.0,1.0,1.0,9.28,2.7625810910653086,6,1.0890748103459675,K5xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K5,test,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s1,0.09,1,4,1.0,1.0,1.0,9.26,2.773280630779527,5,1.0660883903503418,K5xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K5,test,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s2,0.09,2,4,1.0,1.0,1.0,9.51,2.5927731920278476,11,1.123837796124545,K5xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K1,far,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s0,0.09,0,4,0.73,nan,0.73,20.45205479452055,11.499847083850737,13,0.2658013930687538,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K1,far,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s1,0.09,1,4,0.85,nan,0.85,19.270588235294117,7.586312709747998,13,0.18360425875737116,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K1,far,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s2,0.09,2,4,0.9,nan,0.9,19.92222222222222,5.816285394369982,13,0.157316831442026,K1xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K2,far,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s0,0.09,0,4,1.0,nan,1.0,16.1,2.4663865796347038,10,0.3125264883041382,K2xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K2,far,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s1,0.09,1,4,0.99,nan,0.99,15.93939393939394,2.8789518057948924,13,0.18200096717247596,K2xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K2,far,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s2,0.09,2,4,1.0,nan,1.0,16.19,2.6625555615334666,12,0.1101108193397522,K2xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K3,far,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s0,0.09,0,4,0.97,nan,0.97,16.11340206185567,3.654557157937737,13,0.7136269165919378,K3xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K3,far,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s1,0.09,1,4,0.97,nan,0.97,17.2680412371134,3.609013948062315,13,0.408248626268827,K3xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K3,far,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s2,0.09,2,4,0.98,nan,0.98,16.653061224489797,3.4751057207952725,13,0.4244235845712515,K3xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K5,far,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s0,0.09,0,4,1.0,nan,1.0,17.96,2.493438978664206,10,0.6854547262191772,K5xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K5,far,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s1,0.09,1,4,0.97,nan,0.97,18.65979381443299,3.758326355141873,13,0.6695164717160739,K5xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
+subgoal_beyond_K5,far,latent_cem_subgoal_beyond,runs/fs4_lam0.09_s2,0.09,2,4,0.99,nan,0.99,18.434343434343436,3.1173788081784055,13,0.7167788468874418,K5xh4 S300 I10 E30 rw1.0 x1 bank400/4 knn8 thr_p25 pick=beyond
