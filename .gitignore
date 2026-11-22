@@ -13,3 +13,4 @@ node_modules/
 /scratch/
 results/screens/
 kaggle_jobs/
+results/eval_all.log
