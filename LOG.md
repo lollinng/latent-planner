@@ -143,3 +143,13 @@
   0.32. Queued: 512x3 seeds 1-2 + test, 12-step rollout loss, frameskip 1, 3x data with 18k steps.
   Live-check workflow (GitHub runner): both scenes load in 1-2 s, no console errors; push 3 of 12 tasks there,
   34 of 76 over all demo-loop runs (45%).
+- 16:20 Push follow-ups. 512x3 predictor, 3 seeds, test (running cost): 0.47 / 0.47 / 0.40 (vs 0.40 / 0.37 / 0.39).
+  12-step rollout loss 0.25, frameskip 1 0.37 (tuning, seed 0; vs 0.40). Final-state cost only (running_w 0):
+  same demo models 0.50 / 0.53 / 0.52 on test (long 0.34-0.35 vs 0.19), 512x3 0.54 / 0.59 / 0.52; oracle on tuning
+  0.57 -> 0.70; with a 120-step budget 0.52-0.55 vs 0.38-0.41 (extra steps add 1-2 points either way). Browser
+  planner with running_w 0: 0.52 on test, 0.46 on 100 JS-generated tasks (vs 0.37 / 0.30). Push demo switched to
+  running_w 0 (meta.json only; two rooms keeps 1.0). Demo-loop headless runs were noisy (20 of 48 with the new
+  cost vs 31 of 64 before; local page loads stalled 30-50 s on jsDelivr from this connection), so the page note
+  quotes the test numbers only. Literature review with 4 research subagents: reports/World models for block
+  pushing.md (notes in research_notes/). Top suggestions: retrain the predictor on the planner's own rollouts
+  (queued), 2-step rollout loss + predictor dropout 0.1, more contact data, final-state cost (done).

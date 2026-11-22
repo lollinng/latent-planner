@@ -90,8 +90,19 @@ extra long cross-room tasks it goes from 50% to 83% at 4 steps and from 83% to *
 
 - A second scene where the agent pushes a block to a target. Same model, objective and planner, with its own data,
   bit-exact JS port and test set.
-- **Test result (3 seeds): 39% ± 1%.** That's 74% for short pushes and 19% for long ones. For comparison: a
-  hand-written pusher using true positions gets 87%, the oracle CEM (true simulator) 64%, random actions 1%.
+- **Test result (3 seeds): 52% ± 1%** (84% short pushes, 34% long), up from 39% (74% / 19%) by one planner change:
+  CEM now scores only the final imagined state. The running cost, needed in two rooms, penalised the detour a long
+  push needs (walking away from the target to get behind the block). Same model, no retraining; the browser
+  planner scores 52% on the test tasks. For comparison: a hand-written pusher using true positions gets 87%, the
+  oracle CEM (true simulator) 64%, random actions 1%.
+- **Where it loses:** with the true simulator and the model's own latent cost, the same planner reaches 86% on the
+  tuning tasks, so the embedding is a good cost and the learned contact dynamics are the weak part. More search
+  doesn't help the learned model (it does help the true simulator: 57% → 81%), a sign the planner exploits model
+  errors. A 512×3 predictor adds a little (55% with the final-state cost) at 2.5× the plan time, so the demo keeps
+  the small one.
+- **How others do it:** a literature review (`reports/World models for block pushing.md`) found published PushT
+  results use ~40× our data, short prediction losses, predictor dropout and final-state costs, and that
+  retraining the predictor on the planner's own rollouts is the best-supported fix for model exploitation.
 - **Why it's weaker:** the model's imagined contact dynamics are inaccurate. Prediction error is ~4× the two-room
   model's, and the block position is encoded only to ~4 px. A longer planning horizon didn't help.
   Weaker SIGReg (λ = 0.01) made the model ignore the block: good prediction loss, useless for pushing (17%).

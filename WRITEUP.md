@@ -198,10 +198,14 @@ image shows the agent where a pusher would be.
 
 | Method | Seeds | Success | Short push (< 20 px) | Long push | Steps (successes) | Per-seed |
 |---|---|---|---|---|---|---|
-| Latent CEM (λ=0.09, frameskip 4), in the demo | 3 | 39 ± 1% | 74 ± 0% | 19 ± 2% | 11.2 | 0.40, 0.37, 0.39 |
-| Same planner in the browser (JS + ONNX Runtime Web, push_fs4_s0) | 1 | 37% | 71% | 18% | 10.9 | 0.37 (Python: 0.40) |
-| Same, LayerNorm projector | 3 | 32 ± 3% | 58 ± 11% | 18 ± 2% | 10.7 | 0.35, 0.28, 0.33 |
-| LayerNorm, 2× data (90% pushing), 12k steps | 3 | 40 ± 0% | 83 ± 2% | 17 ± 1% | 9.4 | 0.40, 0.40, 0.40 |
+| Latent CEM (λ=0.09, frameskip 4), final-state cost: in the demo | 3 | 52 ± 1% | 84 ± 4% | 34 ± 1% | 15.4 | 0.50, 0.53, 0.52 |
+| Same model, running cost (the demo until 22 Nov) | 3 | 39 ± 1% | 74 ± 0% | 19 ± 2% | 11.2 | 0.40, 0.37, 0.39 |
+| Browser planner (JS + ONNX Runtime Web, push_fs4_s0), final-state cost | 1 | 52% | 74% | 40% | 17.0 | 0.52 (Python: 0.50) |
+| Browser planner, running cost | 1 | 37% | 71% | 18% | 10.9 | 0.37 (Python: 0.40) |
+| 512×3 predictor, final-state cost | 3 | 55 ± 3% | 86 ± 4% | 38 ± 5% | 17.2 | 0.54, 0.59, 0.52 |
+| 512×3 predictor, running cost | 3 | 45 ± 3% | 84 ± 5% | 24 ± 3% | 11.4 | 0.47, 0.47, 0.40 |
+| LayerNorm projector, running cost | 3 | 32 ± 3% | 58 ± 11% | 18 ± 2% | 10.7 | 0.35, 0.28, 0.33 |
+| LayerNorm, 2× data (90% pushing), 12k steps, running cost | 3 | 40 ± 0% | 83 ± 2% | 17 ± 1% | 9.4 | 0.40, 0.40, 0.40 |
 | Hand-written pusher (true positions) | - | 87% | 100% | 80% | 23.3 | - |
 | Oracle CEM: true simulator, state-distance cost | - | 64% | 91% | 49% | 11.1 | - |
 | Random actions | - | 1% | 3% | 0% | 9.0 | - |
@@ -270,6 +274,22 @@ Swapping one part at a time for the real thing, on the 100 tuning tasks with the
   search mostly finds plans that look good only inside the model.
 - **A bigger predictor helps a little at most** (seed 0, tuning tasks): 256×2 (current) 32%, 512×2 36%, 512×3 40%,
   1024×2 32%, 1024×3 39%. Plan time grows with it (Python, 100 tasks batched: 0.49 s → 0.96 s for 512×3).
+
+- **What did help: score only the final imagined state.** The running cost (mean distance to the goal along the
+  plan, added because final-state-only planning procrastinated in two rooms, finding 2) penalises the detour a
+  long push needs: walking away from the target to get behind the block. Dropping it (running_w 0) lifts the
+  test score of the same models from 39% to 52% (long pushes 19% → 34%; 3 seeds) and the 512×3 predictor from 45%
+  to 55%; the true-simulator oracle goes from 57% to 70% on the tuning tasks. LeWM, DINO-WM and V-JEPA 2-AC all
+  plan with a final-state cost. The push demo now uses it (same model, no retraining; browser planner 52% on the
+  test tasks); two rooms keeps the running cost.
+- **Other training changes** (512×3 predictor, seed 0, tuning tasks, running cost): a 12-step rollout loss 25%
+  (vs 40% with 8 steps; published JEPA ablations also favour short rollout losses), frameskip 1 37% at 3.6× the
+  plan time.
+
+A literature review of how others handle pushing (`reports/World models for block pushing.md`) points the same
+way: published PushT results use ~40× our data, one-step or 2-step prediction losses, predictor dropout, and
+final-state costs; retraining the predictor on the planner's own rollouts is the best-supported fix for the
+model exploitation seen here.
 
 Scripts: `scripts/push_cost_vs_dynamics.py` (uses a batched torch port of the push renderer, checked pixel-exact
 against `env_push.render`), `scripts/push_oracle_horizon.py`, `scripts/push_search.sh`, `scripts/train_push_pred.sh`.
