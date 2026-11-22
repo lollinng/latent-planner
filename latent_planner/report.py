@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 import matplotlib
@@ -20,11 +21,18 @@ import pandas as pd  # noqa: E402
 BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
 NEUTRAL, INK, INK2, GRID = "#a3a29c", "#0b0b0b", "#52514e", "#e6e5e0"
 
-CONFIGS = [  # (lam, frameskip, label, ours, color)
-    (0.09, 1, "Latent CEM, LeWM-style (λ=0.09)", True, BLUE),
-    (0.09, 4, "Latent CEM, frameskip 4 (λ=0.09)", True, ORANGE),
-    (0.0, 1, "Latent CEM, no SIGReg (λ=0)", False, AQUA),
+CONFIGS = [  # (run-name prefix, label, ours, color); runs are grouped by name, so variants never mix
+    ("lam0.09_s", "Latent CEM, LeWM-style (λ=0.09)", True, BLUE),
+    ("fs4_lam0.09_s", "Latent CEM, frameskip 4 (λ=0.09)", True, ORANGE),
+    ("ln_fs4_lam0.09_s", "Latent CEM, frameskip 4, LayerNorm projector", True, "#6250d6"),
+    ("lam0_s", "Latent CEM, no SIGReg (λ=0)", False, AQUA),
 ]
+
+
+def runs_named(df, prefix, col="run"):
+    """Rows whose run is exactly <prefix><seed digit> (works for 'runs/x_s0' and bare 'x_s0')."""
+    names = df[col].fillna("").map(lambda r: Path(r).name)
+    return df[names.str.fullmatch(re.escape(prefix) + r"\d")]
 BASELINES = [
     ("oracle_cem", "Oracle CEM: true simulator, straight-line cost"),
     ("greedy", "Straight line to goal (true positions)"),
@@ -60,8 +68,8 @@ def main() -> None:
     m = ["success", "success_same", "success_cross", "mean_steps_success", "sec_per_replan"]
 
     rows, md = [], []
-    for lam, fs, label, ours, _ in CONFIGS:
-        g = ev[(ev.method == "latent_cem") & (ev.lam == lam) & (ev.frameskip == fs)].drop_duplicates("run", keep="last")
+    for prefix, label, ours, _ in CONFIGS:
+        g = runs_named(ev[ev.method == "latent_cem"], prefix).drop_duplicates("run", keep="last")
         if g.empty:
             continue
         mu, sd = g[m].mean(), g[m].std(ddof=0)
@@ -103,8 +111,8 @@ def main() -> None:
         md += ["## Probes (validation data; diagnostics, never used by the planner)", "",
                "| Config | 16-step rollout error | Embedding std | Effective rank (of 32) | Position probe RMSE (px) | Surprise AUROC | "
                "Latent vs geodesic ρ | Latent vs straight-line ρ | Cost basin radius (px) |", "|---|---|---|---|---|---|---|---|---|"]
-        for lam, fs, label, _, _ in CONFIGS:
-            g = an[(an.lam == lam) & (an.frameskip == fs)].drop_duplicates("run", keep="last")
+        for prefix, label, _, _ in CONFIGS:
+            g = runs_named(an, prefix).drop_duplicates("run", keep="last")
             if g.empty:
                 continue
 
@@ -151,10 +159,12 @@ def main() -> None:
         ep = pd.read_csv(res / "eval_push.csv")
         et = ep[(ep.taskset == "test") & (ep.tag == "push")]
         pm = ["success", "success_short", "success_long", "mean_steps_success"]
-        g = et[et.method == "latent_cem"].drop_duplicates("run", keep="last")
-        if not g.empty:
+        for prefix, plabel in [("push_fs4_s", "Latent CEM (λ=0.09, frameskip 4)"),
+                               ("push_ln_fs4_s", "Latent CEM, LayerNorm projector")]:
+          g = runs_named(et[et.method == "latent_cem"], prefix).drop_duplicates("run", keep="last")
+          if not g.empty:
             mu, sd = g[pm].mean(), g[pm].std(ddof=0)
-            push_rows.append({"label": "Latent CEM (λ=0.09, frameskip 4)", "ours": True, "n_seeds": len(g),
+            push_rows.append({"label": plabel, "ours": True, "n_seeds": len(g),
                               "success": mu.success, "success_std": sd.success, "success_short": mu.success_short,
                               "success_short_std": sd.success_short, "success_long": mu.success_long,
                               "success_long_std": sd.success_long, "steps": mu.mean_steps_success,
@@ -228,8 +238,8 @@ def main() -> None:
     plt.close(fig)
 
     fig, axes = plt.subplots(1, 2, figsize=(10, 3.6))
-    for lam, fs, label, _, color in CONFIGS:
-        logs = sorted(Path("runs").glob(f"{'fs4_' if fs == 4 else ''}lam{lam:g}_s*/log.csv"))
+    for prefix, label, _, color in CONFIGS:
+        logs = sorted(p for p in Path("runs").glob(f"{prefix}*/log.csv") if re.fullmatch(re.escape(prefix) + r"\d", p.parent.name))
         for i, p in enumerate(logs):
             d = pd.read_csv(p)
             col = "val_nmse_e16" if "val_nmse_e16" in d else "val_nmse_h16"
