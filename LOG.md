@@ -30,3 +30,16 @@
   near-shortest paths. Planner settings locked from the tuning set: K=5 knots x hold 4, S=300, I=10, E=30, rw=1.0.
 - 06:05 Launched the experiment matrix detached (`scripts/train_all.sh`, setsid/nohup): lam 0.09 x3 seeds,
   lam 0 x3 (no SIGReg), frameskip-4 lam 0.09 x3 (cheaper planning for the browser).
+- 06:10 Browser demo works end to end (Chrome and WebKit, desktop 1200x900 and phone 390x844, no horizontal
+  overflow): loads, plans with ORT-web 1.31.1 wasm (1 thread), reaches goals. Plan time ~0.8 s per replan on this
+  laptop with the frameskip-1 model (300 samples x 10 iters x 20 steps), too slow for phones -> frameskip-4 model.
+- 06:12 JS env port is bit-exact with env.py (positions float64-equal, identical pixels; tests/test_js_parity.py).
+- 06:14 Probes on lam0.09 s0: surprise AUROC 1.00 (median error 0.003 real vs 1.89 teleport); latent distance is
+  not geodesic (Spearman 0.37 vs geodesic, 0.36 vs straight line) but a ~12 px basin around the goal, flat beyond.
+  Door crossing comes from the 20-step horizon finding the basin, and the flat far field avoids the wall trap that
+  the straight-line oracle falls into. Demo shows this as the "cost map" overlay (grid_z.bin) instead of PCA
+  (top-2 PCs explain only 19%).
+- 06:16 Test-set baselines (100 tasks): random 0.11, straight line 0.70 (same 1.00 / other room 0.40),
+  oracle CEM 0.87 (1.00 / 0.74).
+- 06:18 fp16 weight storage in the ONNX files (Cast back to fp32, folded at load): model download 5.3 -> 2.9 MB.
+  Planning with fp16-rounded weights on the tuning set: 1.00 success either way (10.1 vs 9.9 steps).

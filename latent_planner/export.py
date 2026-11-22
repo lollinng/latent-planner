@@ -6,8 +6,9 @@ Writes:
   encoder.onnx   frames uint8 (N, 64, 64, 3) -> z float32 (N, D)          (BatchNorm in eval mode)
   rollout.onnx   z0 (S, D), knots (S, K, 2) -> zs (S, K*hold/fs, D)        (whole CEM horizon unrolled, one call
                                                                            scores every sample of one iteration)
-  meta.json      shapes, CEM defaults, and visual-only helpers: a linear probe z -> (x, y) and a 2-D PCA basis.
-                 The planner never uses the probe or PCA; they only draw the imagined path and the latent map.
+  meta.json      shapes, CEM defaults, and a visual-only linear probe z -> (x, y) that draws the imagined path.
+  grid_z.bin     latents of a 1 px grid of positions, used only to draw the cost landscape.
+                 The planner never uses the probe or the grid.
 """
 
 from __future__ import annotations
@@ -49,7 +50,32 @@ class RolloutExport(nn.Module):
         return torch.stack(zs, dim=1)
 
 
-def export(run: Path, out: Path, cem: CEMConfig, opset: int = 17) -> dict:
+def fp16_storage(path: Path, min_elems: int = 256) -> None:
+    """Store large float32 weights as float16 followed by a Cast back to float32. Halves the download; ONNX
+    Runtime folds the casts when the session is created, so the arithmetic stays float32."""
+    import onnx
+    from onnx import TensorProto, helper, numpy_helper
+
+    m = onnx.load(str(path))
+    g = m.graph
+    keep, half, casts = [], [], []
+    for init in g.initializer:
+        if init.data_type == TensorProto.FLOAT and int(np.prod(init.dims)) >= min_elems:
+            h = numpy_helper.from_array(numpy_helper.to_array(init).astype(np.float16), init.name + "__fp16")
+            half.append(h)
+            casts.append(helper.make_node("Cast", [h.name], [init.name], to=TensorProto.FLOAT))
+        else:
+            keep.append(init)
+    del g.initializer[:]
+    g.initializer.extend(keep + half)
+    nodes = list(g.node)
+    del g.node[:]
+    g.node.extend(casts + nodes)
+    onnx.checker.check_model(m)
+    onnx.save(m, str(path))
+
+
+def export(run: Path, out: Path, cem: CEMConfig, opset: int = 17, fp16: bool = True) -> dict:
     out.mkdir(parents=True, exist_ok=True)
     model = load_model(run / "model.pt", "cpu")
     D = model.cfg.latent_dim
@@ -63,7 +89,13 @@ def export(run: Path, out: Path, cem: CEMConfig, opset: int = 17) -> dict:
     torch.onnx.export(ro, (z0, knots), out / "rollout.onnx", input_names=["z0", "knots"], output_names=["zs"],
                       dynamic_axes={"z0": {0: "S"}, "knots": {0: "S"}, "zs": {0: "S"}}, **kw)
 
-    # Parity: onnxruntime vs torch on fresh inputs (different batch sizes than the export trace).
+    if fp16:
+        fp16_storage(out / "encoder.onnx")
+        fp16_storage(out / "rollout.onnx")
+
+    # Parity: onnxruntime vs the float32 torch model on fresh inputs (different batch sizes than the export
+    # trace). fp16 weight storage moves latents (std ~1) by ~1e-3, so it gets a looser bound; planning with
+    # fp16-rounded weights was checked separately (same success on the tuning set, see LOG.md).
     import onnxruntime as ort
 
     rng = np.random.default_rng(0)
@@ -79,24 +111,28 @@ def export(run: Path, out: Path, cem: CEMConfig, opset: int = 17) -> dict:
     zo = s_enc.run(None, {"frames": f})[0]
     ro_ = s_ro.run(None, {"z0": z0.numpy(), "knots": kn.numpy()})[0]
     parity = {"encoder_max_abs": float(np.abs(zo - zt).max()), "rollout_max_abs": float(np.abs(ro_ - rt).max())}
-    assert parity["encoder_max_abs"] < 1e-3 and parity["rollout_max_abs"] < 1e-3, parity
+    tol = 2e-2 if fp16 else 1e-3
+    assert parity["encoder_max_abs"] < tol and parity["rollout_max_abs"] < tol, parity
+    parity["fp16_weight_storage"] = fp16
 
-    # Visual-only helpers, fitted on a dense grid of free positions.
     from sklearn.linear_model import Ridge
 
-    xs = np.arange(env.BORDER + env.AGENT_R, env.SIZE - env.BORDER - env.AGENT_R + 1e-9, 1.0)
-    grid = np.array([[x, y] for y in xs for x in xs if env.is_free(x, y)])
+    # Visual-only helpers on a dense 1 px grid of agent positions. grid_z.bin holds the latent of every grid
+    # position (float32, row-major over y then x, NaN where the agent can't be), so the page can draw the
+    # planner's cost landscape ||z(p) - z_goal|| for any goal without running the encoder 3000 times.
+    lo, hi = env.BORDER + env.AGENT_R, env.SIZE - env.BORDER - env.AGENT_R
+    xs = np.arange(lo, hi + 1e-9, 1.0)
+    allp = np.array([[x, y] for y in xs for x in xs])
+    free = np.array([env.is_free(x, y) for x, y in allp])
     with torch.no_grad():
-        zg = np.concatenate([enc(torch.from_numpy(env.render_batch(grid[i : i + 512]))).numpy()
-                             for i in range(0, len(grid), 512)])
+        zall = np.concatenate([enc(torch.from_numpy(env.render_batch(allp[i : i + 512]))).numpy()
+                               for i in range(0, len(allp), 512)])
+    zall[~free] = np.nan
+    zall.astype(np.float32).tofile(out / "grid_z.bin")
+    grid, zg = allp[free], zall[free]
     probe = Ridge(alpha=1e-3).fit(zg, grid)
     probe_rmse = float(np.sqrt(((probe.predict(zg) - grid) ** 2).sum(1).mean()))
-    mu = zg.mean(0)
-    _, sv, vt = np.linalg.svd(zg - mu, full_matrices=False)
-    pcs = vt[:2]
-    pc_xy = (zg - mu) @ pcs.T
-    sub = grid[:: max(1, len(grid) // 900)]
-    sub_idx = np.array([np.where((grid == p).all(1))[0][0] for p in sub])
+    sv = np.linalg.svd(zg - zg.mean(0), compute_uv=False)
 
     summary = json.loads((run / "summary.json").read_text())
     meta = {
@@ -107,13 +143,12 @@ def export(run: Path, out: Path, cem: CEMConfig, opset: int = 17) -> dict:
         "env": {"SIZE": env.SIZE, "SPEED": env.SPEED, "SUBSTEPS": env.SUBSTEPS, "AGENT_R": env.AGENT_R},
         "probe": {"W": probe.coef_.round(6).tolist(), "b": probe.intercept_.round(6).tolist(),
                   "grid_rmse_px": probe_rmse},
-        "pca": {"mean": mu.round(6).tolist(), "components": pcs.round(6).tolist(),
-                "explained": (sv[:2] ** 2 / (sv**2).sum()).round(4).tolist(),
-                "grid_xy": grid[sub_idx].round(1).tolist(), "grid_pc": pc_xy[sub_idx].round(4).tolist()},
+        "grid": {"x0": float(lo), "step": 1.0, "n": int(len(xs)), "file": "grid_z.bin"},
+        "pca_explained_top2": (sv[:2] ** 2 / (sv**2).sum()).round(4).tolist(),
         "train": {k: summary[k] for k in ("val_eff_rank", "probe_rmse_px", "train_seconds")},
         "val_rollout_nmse": [round(x, 5) for x in summary["val_rollout_nmse"]],
         "parity": parity,
-        "bytes": {p.name: p.stat().st_size for p in (out / "encoder.onnx", out / "rollout.onnx")},
+        "bytes": {p.name: p.stat().st_size for p in (out / "encoder.onnx", out / "rollout.onnx", out / "grid_z.bin")},
     }
     (out / "meta.json").write_text(json.dumps(meta))
     return meta
@@ -129,7 +164,7 @@ def main() -> None:
     cem = CEMConfig(samples=args.samples, iters=args.iters, running_w=1.0)
     m = export(Path(args.run), Path(args.out), cem)
     print(json.dumps({k: m[k] for k in ("run", "parity", "bytes", "frameskip")}, indent=1),
-          f"probe grid rmse {m['probe']['grid_rmse_px']:.2f}px, PCA explained {m['pca']['explained']}")
+          f"probe grid rmse {m['probe']['grid_rmse_px']:.2f}px, PCA top-2 explained {m['pca_explained_top2']}")
 
 
 if __name__ == "__main__":
