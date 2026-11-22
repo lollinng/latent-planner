@@ -60,7 +60,7 @@ live in the browser:
   code, and was OOM-killed. Session 2 resumed at 05:52 and fixed the OOM first (data generation peak RAM
   9.2 GB → 0.15 GB). It reached test results by 06:53, the public deploy by 07:05, and the merged sweep by 08:00.
 - **Local GPU (RTX 3050 Laptop, 4 GB):** 9 main models at ~5-6 min each (about 50 min), test evaluations of about
-  1.5 min each, plus the push-scene runs. Host RAM peaked at 1.8 GB and VRAM at 2.6 GB.
+  1.5 min each, plus 4 push models (3 × 5 min, plus one 13-min variant). Host RAM peaked at 1.8 GB and VRAM at 2.6 GB.
 - **Kaggle (free T4, private kernel):** one kernel, about 84 min of GPU time, for 13 runs (λ sweep plus the
   cross-hardware re-run) including data generation, evaluation and probes. That is about 1.4 of the ~30 free
   GPU-hours per week.
@@ -68,9 +68,17 @@ live in the browser:
 - **Version control:** 30+ small commits. Before the first push, the history was scrubbed of machine details and
   private links, and a full-history scan for secrets, emails and hostnames came back clean.
 
-## Scene 2: Push (in progress)
+## Scene 2: Push (stretch goal, shipped behind a toggle)
 
-<!-- PUSH -->
+- A second scene where the agent pushes a block to a target. Same model, objective and planner, with its own data,
+  bit-exact JS port and test set.
+- **Test result (3 seeds): 39% ± 1%.** That's 74% for short pushes and 19% for long ones. For comparison: a
+  hand-written pusher using true positions gets 87%, the oracle CEM (true simulator) 64%, random actions 1%.
+- **Why it's weaker:** the model's imagined contact dynamics are inaccurate. Prediction error is ~4× the two-room
+  model's, and the block position is encoded only to ~4 px. A longer planning horizon didn't help.
+  Weaker SIGReg (λ = 0.01) made the model ignore the block: good prediction loss, useless for pushing (17%).
+- Bounded on purpose: the four extra training variants queued on Kaggle never left the queue and were cancelled
+  without using any GPU. The demo states the 39% on the page.
 
 ## Known limitations
 

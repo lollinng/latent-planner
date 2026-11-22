@@ -59,7 +59,9 @@ const SCENES = {
   push: {
     dir: "model_push/",
     hint: "Tap where the block should go. Drag the agent or the block to move them.",
-    note: "",
+    note: "Harder scene. On 100 test pushes this model gets the block within 3 px of its target 39% of the time: "
+      + "74% for short pushes, 19% for long ones that need it to walk around the block first. Its imagined "
+      + "contact dynamics are the weak spot (see the write-up).",
     render: EP.render,
     step: EP.stepState,
     initState: () => EP.sampleState(rand),

@@ -98,5 +98,52 @@
    "sec_per_replan": 1.194000244140625e-05
   }
  ],
- "note": "100 fixed test tasks, half needing the door; success = within 4 px of the goal within 50 steps. Mean \u00b1 std over 3 training seeds. Oracle CEM plans with the true simulator but straight-line distance."
+ "note": "100 fixed test tasks, half needing the door; success = within 4 px of the goal within 50 steps. Mean \u00b1 std over 3 training seeds. Oracle CEM plans with the true simulator but straight-line distance.",
+ "push_rows": [
+  {
+   "label": "Latent CEM (\u03bb=0.09, frameskip 4)",
+   "ours": true,
+   "n_seeds": 3,
+   "success": 0.3866666666666667,
+   "success_std": 0.012472191289246483,
+   "success_short": 0.7428571428571429,
+   "success_short_std": 0.0,
+   "success_long": 0.19487179487179487,
+   "success_long_std": 0.019187986598840724,
+   "steps": 11.237266112266113,
+   "per_seed": [
+    0.4,
+    0.37,
+    0.39
+   ]
+  },
+  {
+   "label": "Hand-written pusher (true positions)",
+   "ours": false,
+   "n_seeds": null,
+   "success": 0.87,
+   "success_short": 1.0,
+   "success_long": 0.8,
+   "steps": 23.298850574712645
+  },
+  {
+   "label": "Oracle CEM: true simulator, state-distance cost",
+   "ours": false,
+   "n_seeds": null,
+   "success": 0.64,
+   "success_short": 0.9142857142857143,
+   "success_long": 0.49230769230769234,
+   "steps": 11.0625
+  },
+  {
+   "label": "Random actions",
+   "ours": false,
+   "n_seeds": null,
+   "success": 0.01,
+   "success_short": 0.02857142857142857,
+   "success_long": 0.0,
+   "steps": 9.0
+  }
+ ],
+ "push_note": "100 fixed test tasks; each goal is the end of a 30-step push from the start. Success = block within 3 px of its target within 60 steps; long = the block must move 20 px or more. Mean \u00b1 std over 3 training seeds."
 }

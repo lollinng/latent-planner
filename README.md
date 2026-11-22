@@ -31,6 +31,9 @@ SIGReg weight sweep: λ = 0 collapses, 0.01-0.09 all reach 100%, 0.3 gives 99%, 
 ([details](results/RESULTS.md)). The model plans from the current frame and a goal image only. Without SIGReg the embedding collapses (std 0.0002)
 and planning fails. ~5 min of training per model on a 4 GB laptop GPU; ~220 ms per re-plan in the browser.
 
+**Second scene, "Push the block" (stretch goal):** the same recipe gets 39% of test pushes (74% of short ones; a
+hand-written pusher gets 87%). The model's imagined contact dynamics are the weak spot; see the write-up.
+
 Full numbers: [results/RESULTS.md](results/RESULTS.md). Write-up: [WRITEUP.md](WRITEUP.md).
 
 ## Reproduce
@@ -67,6 +70,7 @@ python3 -m http.server -d web -b 127.0.0.1 8000
 | Path | What |
 |---|---|
 | `latent_planner/env.py` | Two-room environment: dynamics, renderer, vectorised step for the oracle |
+| `latent_planner/env_push.py`, `eval_push.py` | Scene 2 (push the block): environment, data policy, evaluation |
 | `latent_planner/data.py` | Memory-bounded dataset generation (two behaviour policies) |
 | `latent_planner/model.py` | Encoder, predictor, SIGReg, JEPA loss |
 | `latent_planner/train.py` | Training loop, validation rollouts, position probe (diagnostic only) |

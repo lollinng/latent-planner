@@ -92,3 +92,9 @@
   0.27 with 8-step holds). Failures do push the block but not toward the goal (median 30 -> 31 px), so the
   imagined contact dynamics are the bottleneck. Sent 4 training variants to Kaggle (lam 0.03 / 0.09, 6k / 15k
   steps, frameskip 4 / 1).
+- 08:47 Push variant lam 0.01, 15k steps (local): rollout error 0.011-0.016 but block read-out 13.7 px and tuning
+  success 0.17: the model ignores the rarely-moving block. Teammate session asked to bound the push work; agreed.
+- 08:50 Push test (100 tasks, 3 seeds, lam 0.09 fs4): 0.40 / 0.37 / 0.39 (short 0.74, long 0.19). Baselines:
+  scripted pusher 0.87, oracle CEM 0.64, random 0.01. Kaggle push-variant kernel was still QUEUED after 30 min;
+  deleted it (never ran, no GPU used). Shipped push behind the scene toggle with the 39% stated on the page;
+  WRITEUP/REPORT/README updated with the contact-dynamics limitation.

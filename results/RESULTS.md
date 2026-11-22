@@ -43,3 +43,24 @@ Rollout error is normalised by the latent variance (1.0 = no better than the mea
 
 λ = 0.09, seed 0, retrained on a Kaggle T4 with the same code and data: success 100% (same room 100%, other room 100%), 10.2 steps; the local RTX 3050 run of the same seed scored 100%.
 
+## Scene 2: Push (100 fixed test tasks, 60-step budget, success = block within 3 px)
+
+| Method | Seeds | Success | Short push (< 20 px) | Long push | Steps (successes) | Per-seed |
+|---|---|---|---|---|---|---|
+| Latent CEM (λ=0.09, frameskip 4) | 3 | 39 ± 1% | 74 ± 0% | 19 ± 2% | 11.2 | 0.40, 0.37, 0.39 |
+| Hand-written pusher (true positions) | - | 87% | 100% | 80% | 23.3 | - |
+| Oracle CEM: true simulator, state-distance cost | - | 64% | 91% | 49% | 11.1 | - |
+| Random actions | - | 1% | 3% | 0% | 9.0 | - |
+
+100 fixed test tasks; each goal is the end of a 30-step push from the start. Success = block within 3 px of its target within 60 steps; long = the block must move 20 px or more. Mean ± std over 3 training seeds.
+
+### Push variants tried on the tuning tasks (seed 0 unless noted)
+
+| Run | Planner | Success | Short | Long | Block read-out error (px) |
+|---|---|---|---|---|---|
+| push_fs4_s0 | K5xh4 S300 I10 rw1.0 | 32% | 53% | 23% | 4.3 |
+| push_fs4_s0 | K8xh4 S300 I10 rw1.0 | 32% | 57% | 21% | 4.3 |
+| push_fs4_s0 | K4xh8 S300 I10 rw1.0 | 27% | 50% | 17% | 4.3 |
+| push_fs4_s1 | K5xh4 S300 I10 rw1.0 | 31% | 57% | 20% | 4.0 |
+| pushv_l0.01_fs4_15k_s0 | K5xh4 S300 I10 rw1.0 | 17% | 40% | 7% | 13.7 |
+

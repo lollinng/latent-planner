@@ -153,6 +153,52 @@ on this environment 0.01-0.03 is slightly better on every probe and gives shorte
 
 ![Success vs SIGReg weight](results/plots/sweep.png)
 
+## Scene 2: Push (stretch goal, partly works)
+
+The second scene is a walled room with an 8×8 px block that the agent pushes. Pushing is kinematic and
+axis-separated: the block moves with the agent and stops at walls, with no momentum or rotation. Like the
+two-room env it is ported to JS bit-exactly. The data is 2,000 episodes (70% from a policy that walks behind the
+block and pushes it in random directions, 30% sticky random walk), and the model, objective, training and planner
+are unchanged (frameskip 4, λ = 0.09, 3 seeds). Each test goal is the end state of a real 30-step push, so the goal
+image shows the agent where a pusher would be.
+
+### Test results (100 fixed test tasks, 60-step budget, success = block within 3 px)
+
+| Method | Seeds | Success | Short push (< 20 px) | Long push | Steps (successes) | Per-seed |
+|---|---|---|---|---|---|---|
+| Latent CEM (λ=0.09, frameskip 4) | 3 | 39 ± 1% | 74 ± 0% | 19 ± 2% | 11.2 | 0.40, 0.37, 0.39 |
+| Hand-written pusher (true positions) | - | 87% | 100% | 80% | 23.3 | - |
+| Oracle CEM: true simulator, state-distance cost | - | 64% | 91% | 49% | 11.1 | - |
+| Random actions | - | 1% | 3% | 0% | 9.0 | - |
+
+100 fixed test tasks; each goal is the end of a 30-step push from the start. Success = block within 3 px of its target within 60 steps; long = the block must move 20 px or more. Mean ± std over 3 training seeds.
+
+#### Variants tried on the tuning tasks (seed 0 unless noted)
+
+| Run | Planner | Success | Short | Long | Block read-out error (px) |
+|---|---|---|---|---|---|
+| push_fs4_s0 | K5xh4 S300 I10 rw1.0 | 32% | 53% | 23% | 4.3 |
+| push_fs4_s0 | K8xh4 S300 I10 rw1.0 | 32% | 57% | 21% | 4.3 |
+| push_fs4_s0 | K4xh8 S300 I10 rw1.0 | 27% | 50% | 17% | 4.3 |
+| push_fs4_s1 | K5xh4 S300 I10 rw1.0 | 31% | 57% | 20% | 4.0 |
+| pushv_l0.01_fs4_15k_s0 | K5xh4 S300 I10 rw1.0 | 17% | 40% | 7% | 13.7 |
+
+**What didn't work, and why.** The planner gets 74% of short pushes but only 19% of long ones, against 87% / 80% for
+a hand-written pusher with true positions. In failures it does push the block, just not toward the target, so the
+problem is the model's imagined contact dynamics, not the search:
+
+- **Prediction is much worse than in two rooms.** 16-step rollout error is ~0.18 vs 0.048, and a linear read-out
+  finds the block only to ~4 px (0.8 px for the agent in two rooms). Contacts are rare in the data (the block moves
+  on ~26% of push-policy steps and ~4% of wander steps), so the predictor sees few of them.
+- **A longer horizon doesn't help:** 32% (20 steps), 32% (32 steps), 27% (32 steps with coarser holds) on the
+  tuning tasks.
+- **Weaker SIGReg makes it worse, in an instructive way.** λ = 0.01 with 2.5× more training gives excellent
+  rollout error (0.011-0.016) but the block read-out degrades to 13.7 px and success drops to 17%: the model learns
+  to mostly ignore the rarely-moving block, which makes its embeddings easy to predict and useless for pushing.
+  Good prediction loss is not evidence of a good planning representation.
+- Not tried, given the time box: more push-heavy data, a bigger latent or predictor, and LeWM's longer history
+  (3 frames).
+
 ## Browser demo
 
 `web/` is a static page: `env.js` (bit-exact port of the environment), `cem.js` (the same CEM as
