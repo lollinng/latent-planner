@@ -19,3 +19,14 @@
   aborts above 3 GB RSS.
 - Result: data/train 2000 eps x 49 frames (1.20 GB on disk, 56% of episodes cross the door) in 11 s with
   **peak RSS 0.15 GB**; data/val 200 eps (seed 1). System used memory moved by ~64 MB during generation.
+- 06:00 Training loop works. First full run (lam 0.09, seed 0, 6000 steps, 5 min): 16-step open-loop rollout
+  error 0.022 of latent variance, effective rank 23/32, linear position probe RMSE 0.57 px (probe is diagnostic only).
+  Host peak RSS 1.81 GB (mostly CUDA libs), GPU peak 2.55 GB.
+- 06:02 Planner bug found with the oracle baseline: final-state-only cost under receding-horizon MPC never arrives
+  (the goal is always at the end of a fresh window), oracle 0.24 success. Adding a running cost (final + 1.0 x mean
+  over the horizon) fixes it: oracle 1.00 same-room / 0.75 cross-room on the tuning set.
+- 06:04 Latent CEM (lam 0.09 s0) on the 100 **tuning** tasks: 1.00 success (same 1.00, cross 1.00), 9.9 steps,
+  0.8 s per replan for all 100 tasks batched. Plotted cross-room trajectories: they go through the door on
+  near-shortest paths. Planner settings locked from the tuning set: K=5 knots x hold 4, S=300, I=10, E=30, rw=1.0.
+- 06:05 Launched the experiment matrix detached (`scripts/train_all.sh`, setsid/nohup): lam 0.09 x3 seeds,
+  lam 0 x3 (no SIGReg), frameskip-4 lam 0.09 x3 (cheaper planning for the browser).
