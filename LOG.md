@@ -98,3 +98,12 @@
   scripted pusher 0.87, oracle CEM 0.64, random 0.01. Kaggle push-variant kernel was still QUEUED after 30 min;
   deleted it (never ran, no GPU used). Shipped push behind the scene toggle with the 39% stated on the page;
   WRITEUP/REPORT/README updated with the contact-dynamics limitation.
+- 10:11 User asked for next goals in parallel with subagents (and suggested multiple Kaggle profiles; declined again:
+  Kaggle/Colab terms allow one account per person). Parallel tracks: LayerNorm projector experiment (local GPU),
+  push v2 on Kaggle (2x data, 90% pushing, LayerNorm, 12k steps), and two worktree subagents. Merged:
+  (1) Colab CLI runner (scripts/colab_run.py, docs/COLAB.md; needs the owner's one-time sign-in);
+  (2) longer-tasks experiment: plain CEM test success 100/99/99/81% at 20/12/8/4-step horizons; subgoals from a
+  latent waypoint graph (5,200 training-frame embeddings) raise 4 steps to 98% (test) and far tasks 50->83%
+  (4 steps), 83->100% (8 steps). It also showed the latent cost is not flat beyond the basin (weak slope,
+  7.5 -> 9.4 from 20 to 110 px), so WRITEUP finding 2, REPORT and the demo text were corrected.
+  Demo: scene captions under the tabs make the two scenes' goals explicit.

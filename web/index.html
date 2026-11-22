@@ -84,8 +84,8 @@
     </ol>
     <p>The dotted path is decoded with a linear read-out fitted after training, only to draw it; the planner never
       sees positions. Turn on the cost map to see what the planner optimises: distance in embedding space is a sharp
-      basin around the goal and flat elsewhere, not a map of the rooms. Routes through the door come from imagining
-      far enough ahead to find the basin.</p>
+      basin around the goal with only a weak slope beyond it, not a map of the rooms. Routes through the door come
+      from the model knowing walls block it and imagining far enough ahead to find the basin.</p>
     <div id="results"></div>
   </section>
 

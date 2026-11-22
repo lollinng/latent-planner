@@ -98,12 +98,15 @@ the oracle and the latent planner.
 
 **2. The latent cost is not a map, and that turns out to help.** Latent distance correlates only weakly with
 geodesic or straight-line distance (Spearman ρ in the table above). Around any goal it forms a sharp basin about
-12 px wide and is roughly flat beyond it. The planner crosses rooms because the 20-step horizon is long enough
-for sampled plans to reach the basin, and because the learned dynamics stop plans at walls. The flat far field
-avoids the trap that catches the straight-line oracle: pressing against the wall right next to a goal in the
-other room earns nothing in latent space, while in true straight-line distance it looks almost as good as
-arriving. The flip side: a goal farther away than the horizon gives no signal at all. The demo's "cost map"
-toggle shows this landscape for whatever goal you click.
+12 px wide; beyond it the distance keeps rising, but only slowly. For the frameskip-4 model the median latent
+distance goes from 1.6 at 0-4 px of path to 7.5 at 16-20 px, then only to 9.4 at 80-110 px
+(`results/horizon/latent_vs_px.txt`). The planner crosses rooms because the learned dynamics stop plans at walls
+and the 20-step horizon reaches the basin; with shorter horizons CEM can still follow the weak far-field slope
+(see finding 8). The weak far field also avoids the trap that catches the straight-line oracle: pressing against
+the wall right next to a goal in the other room earns little in latent space, while in true straight-line distance
+it looks almost as good as arriving. (An earlier draft called the far field flat and said goals beyond the
+horizon give no signal; the horizon experiment below showed that was too strong.) The demo's "cost map" toggle
+shows this landscape for whatever goal you click.
 
 **3. Without SIGReg the embedding collapses.** With λ = 0 every seed's embedding shrinks to a standard deviation
 of ~3e-4 (vs ~0.95), the prediction loss falls to ~2e-7 because predicting a constant is trivial, and a linear
@@ -152,6 +155,25 @@ on this environment 0.01-0.03 is slightly better on every probe and gives shorte
 λ = 0.09, seed 0, retrained on a Kaggle T4 with the same code and data: success 100% (same room 100%, other room 100%), 10.2 steps; the local RTX 3050 run of the same seed scored 100%.
 
 ![Success vs SIGReg weight](results/plots/sweep.png)
+
+**8. Longer tasks: subgoals from a latent waypoint graph.** Shrinking the planning horizon shows where it breaks:
+with frameskip-4 models (3 seeds) test success is 100% at 20 steps, 99% at 12 and 8 steps, and 81% at 4 steps. On
+100 extra cross-room tasks with paths of at least 70 px ("far") it falls to 83% at 8 steps and 50% at 4. The fix
+uses only embeddings: a graph over 5,200 embeddings of training frames (edges between consecutive frames, plus
+near neighbours under a latent-distance threshold calibrated on those transitions), a shortest-path search from
+the current embedding to the goal's, and CEM aimed at the first node at or beyond one horizon along that path.
+
+| Tasks, horizon | Plain CEM | With subgoals |
+|---|---|---|
+| test, 4 steps | 81% | **98%** |
+| far, 4 steps | 50% | **83%** |
+| far, 8 steps | 83% | **100%** |
+| test or far, 20 steps | 99-100% | 99-100% (unchanged) |
+
+How the subgoal is chosen matters more than the graph: aiming at the farthest node *within* one horizon often
+picked a node ~1 px away, the agent stalled, and success fell to 2% on far tasks at 4 steps. The "beyond" rule was
+chosen on the tuning tasks; the far task set was designed after seeing the short-horizon numbers. Details:
+[results/horizon/SUBGOAL.md](results/horizon/SUBGOAL.md).
 
 ## Scene 2: Push (stretch goal, partly works)
 
@@ -217,8 +239,8 @@ reaches goals with no horizontal overflow.
 
 - The environment is tiny and fully observed: one frame is a complete state, the dynamics are deterministic,
   and there are no distractors. This shows the recipe working end to end, not that it scales.
-- The planner needs the goal within its 20-step horizon (finding 2). Longer tasks would need a longer horizon or
-  hierarchical planning.
+- With short horizons the planner fails on long tasks unless it plans through subgoals (finding 8); the waypoint
+  graph needs a dense bank of training frames, which is easy in a world this small.
 - One planning seed per trained model; the spread across seeds is training variance only.
 - The demo uses one model (frameskip 4, seed 0); the evaluation numbers cover all three seeds. Its browser
   planner (same algorithm, JS random numbers, ONNX Runtime Web, fp16 predictor weights) scores 99% on the test

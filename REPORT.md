@@ -42,10 +42,11 @@ live in the browser:
 
 ## Findings worth knowing
 
-1. **The latent cost is a basin, not a map.** Latent distance to the goal is a sharp ~12 px basin and flat
-   elsewhere; it doesn't trace the rooms. The planner gets through the door because its 20-step lookahead is
-   long enough to find the basin, and the flat far field avoids the trap that catches the straight-line oracle
-   (hugging the wall next to a goal in the other room).
+1. **The latent cost is a basin, not a map.** Latent distance to the goal is a sharp ~12 px basin with only a weak
+   slope beyond it; it doesn't trace the rooms. The planner gets through the door because the learned dynamics
+   stop plans at walls and its lookahead reaches the basin. The weak far field also avoids the trap that catches the
+   straight-line oracle (hugging the wall next to a goal in the other room). An earlier version of this report said
+   the far field was flat; the horizon experiment showed a weak slope that CEM can follow.
 2. **Final-state-only cost fails under re-planning.** The agent kept pushing the goal to the end of a fresh
    window. A running-cost term fixed it; we found this with the oracle first.
 3. **Training only settles late.** Validation rollouts stay unstable until the learning rate decays in the last
@@ -68,6 +69,14 @@ live in the browser:
 - **Version control:** 30+ small commits. Before the first push, the history was scrubbed of machine details and
   private links, and a full-history scan for secrets, emails and hostnames came back clean.
 
+## Longer tasks: subgoals (next step 2, done)
+
+A subagent measured the horizon limit and added subgoal planning from a graph of training-frame embeddings
+(embeddings only, no positions). Test success at the shortest horizon (4 steps) goes from 81% to **98%**. On 100
+extra long cross-room tasks it goes from 50% to 83% at 4 steps and from 83% to **100%** at 8 steps. At the default
+20 steps nothing changes, because the goal is already in reach. Details in WRITEUP finding 8 and
+`results/horizon/SUBGOAL.md`.
+
 ## Scene 2: Push (stretch goal, shipped behind a toggle)
 
 - A second scene where the agent pushes a block to a target. Same model, objective and planner, with its own data,
@@ -84,7 +93,8 @@ live in the browser:
 
 - The two-room world is tiny, fully observed and deterministic: one frame is the whole state, and there are no
   distractors. It shows the recipe working end to end, not that it scales.
-- Goals must be within the planner's 20-step lookahead, because the cost gives no signal beyond the basin.
+- With a short lookahead, long tasks need subgoals (see "Longer tasks" below); the waypoint graph relies on a dense
+  bank of training frames, easy in a world this small.
 - One planning seed per trained model; the error bars are training variance only.
 - The demo runs one model (frameskip 4, seed 0). Its fp32 encoder (fp16 weights broke it) makes the download
   5 MB instead of ~2.6 MB.
@@ -93,8 +103,8 @@ live in the browser:
 
 1. Replace the projector's BatchNorm with LayerNorm (or lower the peak learning rate) and check whether training
    stabilises early. This would also let fp16 weights halve the download.
-2. Longer tasks: hierarchical planning or a learned value on top of the latent cost, to reach goals beyond the
-   horizon.
+2. ~~Longer tasks~~: done with subgoals from a latent waypoint graph (see above). Next would be a learned value
+   function instead of a frame bank, for worlds too big to cover densely.
 3. Harder scenes: distractors, partial observability or stochastic dynamics, where pixel-free prediction should
    matter more.
 4. Use WebGPU when available, for more CEM samples per re-plan on phones.
