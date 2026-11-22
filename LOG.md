@@ -74,7 +74,7 @@
   scan clean: personal noreply identity on all commits, no emails, hostnames, IPs, tokens or Kaggle credentials).
   Pages via Actions; live at https://prathameshjadhav.in/latent-planner/ (no DNS change). Live smoke test in
   headless Chrome: loads in 3.4-4.5 s, ~180 ms per plan, 4/4 goals, no console errors, no overflow at 390 px.
-- 07:20 Kaggle sweep merged (13 runs, Tesla T4, torch 2.11): dataset sha256 identical to local (frames, pos, actions,
+- 08:00 Kaggle sweep merged (13 runs, Tesla T4, torch 2.11): dataset sha256 identical to local (frames, pos, actions,
   val). Cross-hardware re-run lam 0.09 s0: 1.00 (same as local). Sweep (3 seeds each): lam 0.01 1.00, 0.03 1.00,
   0.3 0.99, 1.0 0.93 (other room 0.86). Rollout error 0.010 -> 0.057 and probe 0.26 -> 2.93 px as lam goes
   0.01 -> 1. SIGReg needs to be on but not strong; 0.09 sits in the flat region. Added to RESULTS.md/WRITEUP.md.
