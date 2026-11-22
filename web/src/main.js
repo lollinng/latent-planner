@@ -41,6 +41,7 @@ const SCENES = {
     },
     goalFromTap: (p) => (E.isFree(p[0], p[1]) ? p : null),
     reached: (s, g) => dist(s, g) <= 4,
+    giveUp: 100, // 2x the eval budget (50 steps)
     grab: (s, p) => (dist(p, s) < E.AGENT_R + 3.5 ? "agent" : null),
     drag: (s, what, p) => (E.isFree(p[0], p[1]) ? p : null),
     teleport: () => E.sampleFree(rand),
@@ -63,11 +64,10 @@ const SCENES = {
     hint: "Tap where the block should go. Drag the agent or the block to move them.",
     note: "Harder scene. On 100 test pushes this model gets the block within 3 px of its target 39% of the time: "
       + "74% for short pushes, 19% for long ones that need it to walk around the block first. Its imagined "
-      + "contact dynamics are the weak spot (see the write-up).",
+      + "contact dynamics are the weak spot (see the write-up). Here each task gets up to 120 steps (the test "
+      + "allows 60), so it reaches about half of them; the status line keeps score.",
     render: EP.render,
     step: EP.stepState,
-    initState: () => EP.sampleState(rand),
-    initGoal: null, // set from the start state below
     // Goal image = block at the target and the agent just behind it along the main push direction, which is
     // what the end of a push looks like in the training data and in the test tasks.
     goalAt(s, b) {
@@ -78,18 +78,13 @@ const SCENES = {
       const off = EP.BLOCK_H + E.AGENT_R + 1.5;
       return [clamp(bx - side[0] * off, EP.LO_A, EP.HI_A), clamp(by - side[1] * off, EP.LO_A, EP.HI_A), bx, by];
     },
-    randomGoal(s) {
-      for (let k = 0; k < 100; k++) {
-        const ax = rand() < 0.5, sign = rand() < 0.5 ? -1 : 1, d = 10 + rand() * 16;
-        const b = [s[2] + (ax ? sign * d : 0), s[3] + (ax ? 0 : sign * d)];
-        if (b[0] < EP.LO_B + 2 || b[0] > EP.HI_B - 2 || b[1] < EP.LO_B + 2 || b[1] > EP.HI_B - 2) continue;
-        const g = this.goalAt(s, b);
-        if (g) return g;
-      }
-      return this.goalAt(s, [32, 32]) || [s[0], s[1], 32, 40];
-    },
+    // New tasks come from the same generator as the test set, so the success rate a visitor sees matches the
+    // 39% in the note. (Chaining pushes from wherever the last one ended is much harder: the agent is pressed
+    // against the block and usually has to walk around it first.)
+    newTask: () => EP.makeTask(rand),
     goalFromTap(p, s) { return this.goalAt(s, p); },
     reached: (s, g) => dist([s[2], s[3]], [g[2], g[3]]) <= 3,
+    giveUp: 120, // 2x the eval budget (60 steps)
     grab(s, p) {
       if (dist(p, s) < E.AGENT_R + 3) return "agent";
       if (Math.abs(p[0] - s[2]) < EP.BLOCK_H + 1.5 && Math.abs(p[1] - s[3]) < EP.BLOCK_H + 1.5) return "block";
@@ -142,6 +137,8 @@ const S = {
   zPredNext: null,
   steps: 0,
   reached: false,
+  gaveUp: false,
+  tally: { tworoom: [0, 0], push: [0, 0] }, // [reached, gave up] for tasks that ran to an end
   surprise: [],
   planTimes: [],
   dragging: null,
@@ -152,8 +149,11 @@ const S = {
 };
 
 function resetScene() {
-  S.pos = scene.initState();
-  S.goal = scene.initGoal ? scene.initGoal() : scene.randomGoal(S.pos);
+  if (scene.newTask) ({ start: S.pos, goal: S.goal } = scene.newTask());
+  else {
+    S.pos = scene.initState();
+    S.goal = scene.initGoal ? scene.initGoal() : scene.randomGoal(S.pos);
+  }
   S.surprise = [];
   S.planTimes = [];
   S.zPredNext = null;
@@ -321,8 +321,10 @@ function pushTrail() {
 
 async function setGoal(g) {
   S.goal = g;
-  S.goalVersion++;
+  const v = ++S.goalVersion;
+  S.zGoal = null; // the loop waits until the new goal is encoded, so it never plans toward the old one
   S.reached = false;
+  S.gaveUp = false;
   S.warm = null;
   S.plan = null;
   S.trail = [];
@@ -333,21 +335,35 @@ async function setGoal(g) {
   const gf = scene.render(g);
   putFrame(ui.seeGoal, gf);
   if (planner) {
-    S.zGoal = await planner.encode(gf);
+    const zg = await planner.encode(gf);
+    if (v !== S.goalVersion) return; // superseded by a newer goal
+    S.zGoal = zg;
     buildCostImage();
   }
   draw();
 }
 
+// "New task": a new goal from where the agent is (two rooms), or a fresh start and goal (push).
+function startNewTask() {
+  if (scene.newTask) {
+    const t = scene.newTask();
+    S.pos = t.start;
+    S.zPredNext = null;
+    return setGoal(t.goal);
+  }
+  return setGoal(scene.randomGoal(S.pos));
+}
+
 async function loop() {
   for (;;) {
-    if (!S.ready || !S.running || S.reached || S.dragging) {
+    if (!S.ready || !S.running || S.reached || S.gaveUp || S.dragging || !S.zGoal) {
       await sleep(60);
       continue;
     }
     const version = S.goalVersion, sv = S.sceneVersion;
     const z = await planner.encode(scene.render(S.pos));
     if (sv !== S.sceneVersion) continue;
+    if (version !== S.goalVersion || !S.zGoal) { S.zPredNext = null; continue; } // new task started meanwhile
     if (S.zPredNext) {
       let e = 0;
       for (let k = 0; k < z.length; k++) e += (z[k] - S.zPredNext[k]) ** 2;
@@ -376,16 +392,23 @@ async function loop() {
       S.steps++;
       ui.steps.textContent = String(S.steps);
       draw();
-      if (scene.reached(S.pos, S.goal)) {
-        S.reached = true;
+      const ok = scene.reached(S.pos, S.goal);
+      if (ok || S.steps >= scene.giveUp) {
+        // Task over: reached, or out of steps (the planner misses some tasks, mostly long pushes). Either way,
+        // say so, keep a running score, and move on to a new random task.
+        if (ok) S.reached = true;
+        else S.gaveUp = true;
+        const t = S.tally[sceneName];
+        t[ok ? 0 : 1]++;
         S.zPredNext = null;
         S.plan = null;
-        setStatus(`Reached in ${S.steps} steps`);
+        const score = `${t[0]} of ${t[0] + t[1]} reached so far`;
+        setStatus(ok ? `Reached in ${S.steps} steps (${score})` : `Missed: gave up after ${S.steps} steps (${score})`);
         draw();
         const v = S.goalVersion;
         setTimeout(() => {
-          if (S.reached && v === S.goalVersion && S.running) setGoal(scene.randomGoal(S.pos));
-        }, 2200);
+          if ((S.reached || S.gaveUp) && v === S.goalVersion && S.running) startNewTask();
+        }, ok ? 2200 : 3000);
         break;
       }
       await sleep(STEP_MS);
@@ -438,9 +461,9 @@ ui.overlay.addEventListener("pointercancel", endDrag);
 ui.play.addEventListener("click", () => {
   S.running = !S.running;
   ui.play.textContent = S.running ? "Pause" : "Play";
-  if (S.running && S.reached) setGoal(scene.randomGoal(S.pos));
+  if (S.running && (S.reached || S.gaveUp)) startNewTask();
 });
-ui.newTask.addEventListener("click", () => setGoal(scene.randomGoal(S.pos)));
+ui.newTask.addEventListener("click", () => startNewTask());
 ui.nudge.addEventListener("click", () => {
   S.pos = scene.teleport(S.pos);
   pushTrail();

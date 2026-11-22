@@ -49,16 +49,22 @@ def run(url: str, shots: Path, goals: int, engine: str, cpu_throttle: float = 1.
             load_s = time.time() - t0
             reached = []
             for g in range(goals):
+                # a task ends when the goal is reached or the demo gives up (scene.giveUp steps)
                 try:
-                    page.wait_for_function("window.__lp.S.reached", timeout=60_000 if scene == "push" else 120_000)
-                    reached.append(page.evaluate("window.__lp.S.steps"))
+                    page.wait_for_function("window.__lp.S.reached || window.__lp.S.gaveUp", timeout=120_000)
+                    n = page.evaluate("window.__lp.S.steps")
+                    reached.append(n if page.evaluate("window.__lp.S.reached") else f"gave up at {n}")
                 except Exception:
-                    reached.append(f"not reached in 60 s ({page.evaluate('window.__lp.S.steps')} steps)")
+                    reached.append(f"no end in 120 s ({page.evaluate('window.__lp.S.steps')} steps)")
                 if g == 0:
                     page.evaluate("document.getElementById('showCost').click()")
                     page.screenshot(path=str(shots / f"{engine}_{scene}_{name}.png"), full_page=(name == "phone"))
                     page.evaluate("document.getElementById('showCost').click()")
-                page.click("#newTask")
+                if g == goals - 1:  # last task: the demo must move on to a new task by itself
+                    v = page.evaluate("window.__lp.S.goalVersion")
+                    page.wait_for_function(f"window.__lp.S.goalVersion > {v}", timeout=10_000)
+                else:
+                    page.click("#newTask")
             times = page.evaluate("window.__lp.S.planTimes")
             scroll_w = page.evaluate("document.documentElement.scrollWidth")
             assert page.evaluate("window.__lp.scene") == scene

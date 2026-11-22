@@ -122,3 +122,38 @@ export function sampleState(rand, blockMargin = 6.0) {
     if (Math.max(Math.abs(ax - bx), Math.abs(ay - by)) > AGENT_R + BLOCK_H + 1.0) return [ax, ay, bx, by];
   }
 }
+
+// A task like the test set (latent_planner/env_push.py make_tasks): a fresh start, then the scripted push policy
+// for `steps` steps (walk behind the block on a random side, push for 4-13 steps, repeat, with action noise). The
+// goal is where that ends, kept only if the block moved at least `minMove` px. Same distribution as the test
+// tasks, though not the same random numbers as Python.
+export function makeTask(rand, steps = 30, minMove = 6.0) {
+  const normal = () => Math.sqrt(-2 * Math.log(1 - rand())) * Math.cos(2 * Math.PI * rand());
+  const clip = (v) => Math.min(1, Math.max(-1, v));
+  const SIDES = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  for (;;) {
+    const start = sampleState(rand);
+    let s = start, side = null, phase = "approach", left = 0;
+    for (let t = 0; t < steps; t++) {
+      let act;
+      if (side === null) {
+        side = SIDES[Math.floor(rand() * 4)];
+        phase = "approach";
+        left = 4 + Math.floor(rand() * 10);
+      }
+      const off = BLOCK_H + AGENT_R + 1.5;
+      if (phase === "approach") {
+        const dx = s[2] - side[0] * off - s[0], dy = s[3] - side[1] * off - s[1], n = Math.hypot(dx, dy);
+        if (n < 1.5) phase = "push";
+        const k = Math.min(1, n / SPEED) / Math.max(n, 1e-6);
+        act = [dx * k, dy * k];
+      }
+      if (phase === "push") {
+        act = side.slice();
+        if (--left <= 0) side = null;
+      }
+      s = stepState(s, [clip(act[0] + 0.3 * normal()), clip(act[1] + 0.3 * normal())]);
+    }
+    if (Math.hypot(s[2] - start[2], s[3] - start[3]) >= minMove) return { start, goal: s };
+  }
+}
