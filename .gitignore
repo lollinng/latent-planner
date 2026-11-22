@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+data/
+runs/
+checkpoints/
+*.pt
+*.ckpt
+*.h5
+*.npz
+node_modules/
+.DS_Store
+/scratch/
