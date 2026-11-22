@@ -1,0 +1,160 @@
+"""Aggregate logged results into results/RESULTS.md, web/results.json and plots. Reads only logged CSVs.
+
+    python -m latent_planner.report --tag main
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: E402
+import numpy as np  # noqa: E402
+import pandas as pd  # noqa: E402
+
+# Reference categorical palette (light mode), fixed order; neutral for baselines.
+BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
+NEUTRAL, INK, INK2, GRID = "#a3a29c", "#0b0b0b", "#52514e", "#e6e5e0"
+
+CONFIGS = [  # (lam, frameskip, label, ours, color)
+    (0.09, 1, "Latent CEM, LeWM-style (λ=0.09)", True, BLUE),
+    (0.09, 4, "Latent CEM, frameskip 4 (λ=0.09)", True, ORANGE),
+    (0.0, 1, "Latent CEM, no SIGReg (λ=0)", False, AQUA),
+]
+BASELINES = [
+    ("oracle_cem", "Oracle CEM: true simulator, straight-line cost"),
+    ("greedy", "Straight line to goal (true positions)"),
+    ("random", "Random actions"),
+]
+
+
+def style(ax):
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+    for s in ("left", "bottom"):
+        ax.spines[s].set_color(GRID)
+    ax.tick_params(colors=INK2, labelsize=9)
+    ax.grid(axis="x", color=GRID, lw=0.8)
+    ax.set_axisbelow(True)
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--tag", default="main")
+    ap.add_argument("--results", default="results")
+    ap.add_argument("--web", default="web/results.json")
+    args = ap.parse_args()
+    res = Path(args.results)
+    ev = pd.read_csv(res / "eval.csv")
+    ev = ev[(ev.taskset == "test") & (ev.tag == args.tag)]
+    an = pd.read_csv(res / "analysis.csv") if (res / "analysis.csv").exists() else None
+    m = ["success", "success_same", "success_cross", "mean_steps_success", "sec_per_replan"]
+
+    rows, md = [], []
+    for lam, fs, label, ours, _ in CONFIGS:
+        g = ev[(ev.method == "latent_cem") & (ev.lam == lam) & (ev.frameskip == fs)].drop_duplicates("run", keep="last")
+        if g.empty:
+            continue
+        mu, sd = g[m].mean(), g[m].std(ddof=0)
+        rows.append({"label": label, "ours": ours, "n_seeds": len(g), "success": mu.success, "success_std": sd.success,
+                     "success_same": mu.success_same, "success_same_std": sd.success_same,
+                     "success_cross": mu.success_cross, "success_cross_std": sd.success_cross,
+                     "steps": mu.mean_steps_success, "sec_per_replan": mu.sec_per_replan,
+                     "per_seed": g.success.round(3).tolist()})
+    for method, label in BASELINES:
+        g = ev[ev.method == method].tail(1)
+        if g.empty:
+            continue
+        r = g.iloc[0]
+        rows.append({"label": label, "ours": False, "n_seeds": None, "success": r.success, "success_same": r.success_same,
+                     "success_cross": r.success_cross, "steps": r.mean_steps_success,
+                     "sec_per_replan": r.sec_per_replan})
+
+    def pct(x, s=None):
+        return f"{100 * x:.0f}%" if s is None or np.isnan(s) else f"{100 * x:.0f} ± {100 * s:.0f}%"
+
+    md += ["## Goal reaching (100 fixed test tasks, 50-step budget, success = within 4 px)", "",
+           "| Method | Seeds | Success | Same room | Other room | Steps (successes) | Per-seed success |",
+           "|---|---|---|---|---|---|---|"]
+    for r in rows:
+        md.append(f"| {r['label']} | {r['n_seeds'] or '-'} | {pct(r['success'], r.get('success_std'))} | "
+                  f"{pct(r['success_same'], r.get('success_same_std'))} | "
+                  f"{pct(r['success_cross'], r.get('success_cross_std'))} | {r['steps']:.1f} | "
+                  f"{', '.join(f'{x:.2f}' for x in r.get('per_seed', [])) or '-'} |")
+    md += ["", "Mean ± std over training seeds (one planning seed each). Baselines are deterministic in their task set "
+           "and run once.", ""]
+
+    if an is not None:
+        md += ["## Probes (validation data; diagnostics, never used by the planner)", "",
+               "| Config | 16-step rollout error | Effective rank (of 32) | Position probe RMSE (px) | Surprise AUROC | "
+               "Latent vs geodesic ρ | Latent vs straight-line ρ | Cost basin radius (px) |", "|---|---|---|---|---|---|---|---|"]
+        for lam, fs, label, _, _ in CONFIGS:
+            g = an[(an.lam == lam) & (an.frameskip == fs)].drop_duplicates("run", keep="last")
+            if g.empty:
+                continue
+
+            def f(c, d=3):
+                return f"{g[c].mean():.{d}f} ± {g[c].std(ddof=0):.{d}f}"
+
+            md.append(f"| {label} | {f('val_nmse_e16')} | {f('val_eff_rank', 1)} | {f('probe_rmse_px', 2)} | "
+                      f"{f('surprise_auroc')} | {f('spearman_geo', 2)} | {f('spearman_euc', 2)} | {f('basin_px', 1)} |")
+        md += ["", "Rollout error is normalised by the latent variance (1.0 = no better than the mean embedding). "
+               "Surprise AUROC separates real next frames from teleports using the prediction error.", ""]
+
+    (res / "RESULTS.md").write_text("# Results\n\nGenerated by `python -m latent_planner.report` from "
+                                    "`results/eval.csv` and `results/analysis.csv`.\n\n" + "\n".join(md) + "\n")
+    note = ("100 fixed test tasks, half needing the door; success = within 4 px of the goal within 50 steps. "
+            "Mean ± std over 3 training seeds. Oracle CEM plans with the true simulator but straight-line distance.")
+    Path(args.web).write_text(json.dumps({"rows": rows, "note": note}, indent=1))
+
+    # ---- plots
+    plots = res / "plots"
+    plots.mkdir(parents=True, exist_ok=True)
+    fig, axes = plt.subplots(1, 2, figsize=(10, 0.5 * len(rows) + 1.2), sharey=True)
+    for ax, key, title in [(axes[0], "success_same", "Same room"), (axes[1], "success_cross", "Other room (through the door)")]:
+        y = np.arange(len(rows))[::-1]
+        vals = [r[key] * 100 for r in rows]
+        errs = [r.get(key + "_std", 0) * 100 if r.get(key + "_std") is not None else 0 for r in rows]
+        cols = [BLUE if r["ours"] else NEUTRAL for r in rows]
+        ax.barh(y, vals, xerr=errs, color=cols, height=0.62, error_kw={"ecolor": INK2, "lw": 1, "capsize": 2})
+        for yi, v in zip(y, vals):
+            ax.text(min(v + 2, 92), yi, f"{v:.0f}%", va="center", fontsize=9, color=INK)
+        ax.set_xlim(0, 105)
+        ax.set_title(title, fontsize=11, color=INK, loc="left")
+        style(ax)
+    axes[0].set_yticks(np.arange(len(rows))[::-1], [r["label"] for r in rows], fontsize=9, color=INK)
+    fig.suptitle("Goal-reaching success on 100 test tasks", fontsize=12, color=INK, x=0.01, ha="left")
+    fig.tight_layout()
+    fig.savefig(plots / "success.png", dpi=150)
+    plt.close(fig)
+
+    fig, axes = plt.subplots(1, 2, figsize=(10, 3.6))
+    for lam, fs, label, _, color in CONFIGS:
+        logs = sorted(Path("runs").glob(f"{'fs4_' if fs == 4 else ''}lam{lam:g}_s*/log.csv"))
+        for i, p in enumerate(logs):
+            d = pd.read_csv(p)
+            col = "val_nmse_e16" if "val_nmse_e16" in d else "val_nmse_h16"
+            axes[0].plot(d.step, d[col], color=color, lw=2 if i == 0 else 1, alpha=1 if i == 0 else 0.45,
+                         label=label if i == 0 else None)
+            axes[1].plot(d.step, d.val_eff_rank, color=color, lw=2 if i == 0 else 1, alpha=1 if i == 0 else 0.45,
+                         label=label if i == 0 else None)
+    axes[0].set_yscale("log")
+    axes[0].set_title("16-step open-loop rollout error (val, normalised)", fontsize=10, color=INK, loc="left")
+    axes[1].set_title("Effective rank of embeddings (val, of 32)", fontsize=10, color=INK, loc="left")
+    for ax in axes:
+        style(ax)
+        ax.grid(axis="y", color=GRID, lw=0.8)
+        ax.set_xlabel("training step", fontsize=9, color=INK2)
+    axes[1].legend(frameon=False, fontsize=8.5, loc="center right")
+    fig.tight_layout()
+    fig.savefig(plots / "training.png", dpi=150)
+    plt.close(fig)
+    print((res / "RESULTS.md").read_text())
+
+
+if __name__ == "__main__":
+    main()
