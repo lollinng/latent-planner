@@ -1,0 +1,73 @@
+[{"stream_name":"stderr","time":1.6273999,"data":"/kaggle/src/script.py:10: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.\n"}
+,{"stream_name":"stderr","time":1.627436893,"data":"  tarfile.open(fileobj=io.BytesIO(base64.b64decode(PAYLOAD)), mode=\"r:gz\").extractall(WORK)\n"}
+,{"stream_name":"stdout","time":8.779605352,"data":"torch 2.11.0+cu130 cuda True Tesla T4\n"}
+,{"stream_name":"stdout","time":8.779639421,"data":"+ python -m latent_planner.data --scene push --episodes 4000 --seed 20 --policy-frac 0.9 --out data/push_train4k\n"}
+,{"stream_name":"stdout","time":13.98046521,"data":"  64/4000 episodes, rss 0.08 GB, 5s\n"}
+,{"stream_name":"stdout","time":53.025169071,"data":"  576/4000 episodes, rss 0.08 GB, 44s\n"}
+,{"stream_name":"stdout","time":91.882579666,"data":"  1088/4000 episodes, rss 0.09 GB, 83s\n"}
+,{"stream_name":"stdout","time":130.638542089,"data":"  1600/4000 episodes, rss 0.09 GB, 122s\n"}
+,{"stream_name":"stdout","time":169.194336562,"data":"  2112/4000 episodes, rss 0.09 GB, 160s\n"}
+,{"stream_name":"stdout","time":207.458819345,"data":"  2624/4000 episodes, rss 0.09 GB, 198s\n"}
+,{"stream_name":"stdout","time":245.936295365,"data":"  3136/4000 episodes, rss 0.09 GB, 237s\n"}
+,{"stream_name":"stdout","time":284.130902992,"data":"  3648/4000 episodes, rss 0.09 GB, 275s\n"}
+,{"stream_name":"stdout","time":310.320738143,"data":"  4000/4000 episodes, rss 0.09 GB, 301s\n"}
+,{"stream_name":"stdout","time":310.330713998,"data":"wrote data/push_train4k/: 4000 x 49 frames (2.41 GB on disk), 92% of episodes move the block \u003e 5 px, 301s, peak RSS 0.16 GB\n"}
+,{"stream_name":"stdout","time":310.367942149,"data":"exit 0 after 302s\n"}
+,{"stream_name":"stdout","time":310.36797899,"data":"+ python -m latent_planner.data --scene push --episodes 200 --seed 11 --out data/push_val\n"}
+,{"stream_name":"stdout","time":315.596864371,"data":"  64/200 episodes, rss 0.08 GB, 5s\n"}
+,{"stream_name":"stdout","time":325.974727377,"data":"  200/200 episodes, rss 0.08 GB, 15s\n"}
+,{"stream_name":"stdout","time":325.976938302,"data":"wrote data/push_val/: 200 x 49 frames (0.12 GB on disk), 78% of episodes move the block \u003e 5 px, 15s, peak RSS 0.15 GB\n"}
+,{"stream_name":"stdout","time":326.007265651,"data":"exit 0 after 16s\n"}
+,{"stream_name":"stdout","time":326.013199818,"data":"SHA256 data/push_train4k/actions.npy 9d9ed2c4e684d2a0\n"}
+,{"stream_name":"stdout","time":332.828518833,"data":"SHA256 data/push_train4k/frames.npy c015f7bb9b67dd24\n"}
+,{"stream_name":"stdout","time":332.838412344,"data":"SHA256 data/push_train4k/pos.npy f7eacff1b175adb5\n"}
+,{"stream_name":"stdout","time":332.838770845,"data":"SHA256 data/push_val/actions.npy 8c50e329bf86b2a0\n"}
+,{"stream_name":"stdout","time":333.191287727,"data":"SHA256 data/push_val/frames.npy 5ec98c01ab88282c\n"}
+,{"stream_name":"stdout","time":333.191919012,"data":"SHA256 data/push_val/pos.npy 55a0abeaedb897ad\n"}
+,{"stream_name":"stdout","time":333.19218964,"data":"+ python -m latent_planner.train --out runs/pushv2_ln_s0 --lam 0.09 --seed 0 --frameskip 4 --proj-norm ln --steps 12000 --train data/push_train4k --val data/push_val \u003e runs/pushv2_ln_s0/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":1081.87487761,"data":"exit 0 after 749s\n"}
+,{"stream_name":"stdout","time":1081.874954139,"data":"+ tail -3 runs/pushv2_ln_s0/stdout.txt\n"}
+,{"stream_name":"stdout","time":1081.877339114,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":1081.877358521,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":1081.877364079,"data":"}\n"}
+,{"stream_name":"stdout","time":1081.87768444,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":1081.877697345,"data":"+ python -m latent_planner.eval_push --runs runs/pushv2_ln_s0 --taskset tune --tag push_dev\n"}
+,{"stream_name":"stdout","time":1089.861410836,"data":"latent_cem runs/pushv2_ln_s0        success 0.29 (short 0.53, long 0.19) steps 10.2 final block 25.2px 361 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":1090.460865585,"data":"exit 0 after 9s\n"}
+,{"stream_name":"stdout","time":1090.460903754,"data":"+ python -m latent_planner.eval_push --runs runs/pushv2_ln_s0 --taskset test --tag push\n"}
+,{"stream_name":"stdout","time":1098.483609103,"data":"latent_cem runs/pushv2_ln_s0        success 0.40 (short 0.83, long 0.17) steps 9.2 final block 22.8px 363 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":1099.057905698,"data":"exit 0 after 9s\n"}
+,{"stream_name":"stdout","time":1099.061252486,"data":"+ python -m latent_planner.train --out runs/pushv2_ln_s1 --lam 0.09 --seed 1 --frameskip 4 --proj-norm ln --steps 12000 --train data/push_train4k --val data/push_val \u003e runs/pushv2_ln_s1/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":1845.32659154,"data":"exit 0 after 746s\n"}
+,{"stream_name":"stdout","time":1845.326644883,"data":"+ tail -3 runs/pushv2_ln_s1/stdout.txt\n"}
+,{"stream_name":"stdout","time":1845.329076339,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":1845.329125642,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":1845.329131788,"data":"}\n"}
+,{"stream_name":"stdout","time":1845.329453825,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":1845.329469835,"data":"+ python -m latent_planner.eval_push --runs runs/pushv2_ln_s1 --taskset tune --tag push_dev\n"}
+,{"stream_name":"stdout","time":1853.409717114,"data":"latent_cem runs/pushv2_ln_s1        success 0.28 (short 0.50, long 0.19) steps 12.5 final block 25.1px 368 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":1853.956920039,"data":"exit 0 after 9s\n"}
+,{"stream_name":"stdout","time":1853.956966187,"data":"+ python -m latent_planner.eval_push --runs runs/pushv2_ln_s1 --taskset test --tag push\n"}
+,{"stream_name":"stdout","time":1861.985943894,"data":"latent_cem runs/pushv2_ln_s1        success 0.40 (short 0.80, long 0.18) steps 9.3 final block 21.2px 366 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":1862.609524264,"data":"exit 0 after 9s\n"}
+,{"stream_name":"stdout","time":1862.617898784,"data":"+ python -m latent_planner.train --out runs/pushv2_ln_s2 --lam 0.09 --seed 2 --frameskip 4 --proj-norm ln --steps 12000 --train data/push_train4k --val data/push_val \u003e runs/pushv2_ln_s2/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":2608.664250879,"data":"exit 0 after 746s\n"}
+,{"stream_name":"stdout","time":2608.664299388,"data":"+ tail -3 runs/pushv2_ln_s2/stdout.txt\n"}
+,{"stream_name":"stdout","time":2608.666542802,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":2608.666565849,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":2608.666572726,"data":"}\n"}
+,{"stream_name":"stdout","time":2608.666951236,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":2608.666970069,"data":"+ python -m latent_planner.eval_push --runs runs/pushv2_ln_s2 --taskset tune --tag push_dev\n"}
+,{"stream_name":"stdout","time":2616.857500259,"data":"latent_cem runs/pushv2_ln_s2        success 0.30 (short 0.57, long 0.19) steps 10.2 final block 24.2px 371 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":2617.414535241,"data":"exit 0 after 9s\n"}
+,{"stream_name":"stdout","time":2617.414570864,"data":"+ python -m latent_planner.eval_push --runs runs/pushv2_ln_s2 --taskset test --tag push\n"}
+,{"stream_name":"stdout","time":2625.470952252,"data":"latent_cem runs/pushv2_ln_s2        success 0.40 (short 0.86, long 0.15) steps 9.7 final block 22.3px 368 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":2626.027009697,"data":"exit 0 after 9s\n"}
+,{"stream_name":"stdout","time":2626.037044386,"data":"ALL_JOBS_DONE\n"}
+,{"stream_name":"stderr","time":2628.684767722,"data":"/usr/local/lib/python3.13/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\\|'\n"}
+,{"stream_name":"stderr","time":2628.684799334,"data":"  cells[i][c] = re.sub('\\\\\\\\\\|', '|', cell)\n"}
+,{"stream_name":"stderr","time":2628.910079854,"data":"/usr/local/lib/python3.13/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\\_'\n"}
+,{"stream_name":"stderr","time":2628.910107437,"data":"  text = re.sub(r'_', '\\_', text) # Escape underscores in display text\n"}
+,{"stream_name":"stderr","time":2629.740256719,"data":"[NbConvertApp] Converting notebook __script__.ipynb to html\n"}
+,{"stream_name":"stderr","time":2630.688415743,"data":"[NbConvertApp] Writing 359127 bytes to __results__.html\n"}
+]

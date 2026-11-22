@@ -25,7 +25,7 @@ live in the browser:
 |---|---|---|
 | Latent planner (λ = 0.09) | **100% on every seed** | 100% |
 | Frameskip-4 model (the one in the browser) | **100% on every seed** | 100% |
-| The browser's own planner (JS + ONNX Runtime Web), run headless on the same tasks | 99% | 98% |
+| The browser's own planner (JS + ONNX Runtime Web, LayerNorm demo model), run headless on the same tasks | 100% | 100% |
 | Without SIGReg (λ = 0): the embedding collapses | 6% | 1% |
 | Oracle: same planner, true simulator, straight-line cost | 87% | 74% |
 | Straight line to goal / random actions | 70% / 11% | 40% / 2% |
@@ -36,7 +36,7 @@ live in the browser:
   regenerated there is byte-identical to the local one (sha256 match).
 - **Latency:** ~180-220 ms per re-plan in Chrome on this laptop with the frameskip-4 model (vs ~800 ms with
   frameskip 1), and ~0.9 s with 4× CPU throttling as a phone stand-in. The live page loads in 3.4-7 s from this
-  connection; the download is 5.0 MB of model plus 3.2 MB of ONNX Runtime.
+  connection; the download is 2.8 MB of model (5.0 MB before the LayerNorm swap) plus 3.2 MB of ONNX Runtime.
 - **Surprise:** the predictor's error separates real next frames from teleports with AUROC 1.00, which drives the
   demo's surprise meter. The collapsed models are at chance (0.53).
 
@@ -69,6 +69,13 @@ live in the browser:
 - **Version control:** 30+ small commits. Before the first push, the history was scrubbed of machine details and
   private links, and a full-history scan for secrets, emails and hostnames came back clean.
 
+## LayerNorm projector (next step 1, done)
+
+Swapping the projector's BatchNorm for LayerNorm fixed the late-settling training: validation error drops below
+0.2 by step 600, against ~5,800 before. Test success is 99/100/99% (vs 100/100/100%). The encoder now survives
+fp16 weights, so the demo runs the LayerNorm model. Its browser planner scores 100% on the test tasks, and the
+model download fell from 5.0 to 2.8 MB.
+
 ## Longer tasks: subgoals (next step 2, done)
 
 A subagent measured the horizon limit and added subgoal planning from a graph of training-frame embeddings
@@ -96,13 +103,12 @@ extra long cross-room tasks it goes from 50% to 83% at 4 steps and from 83% to *
 - With a short lookahead, long tasks need subgoals (see "Longer tasks" below); the waypoint graph relies on a dense
   bank of training frames, easy in a world this small.
 - One planning seed per trained model; the error bars are training variance only.
-- The demo runs one model (frameskip 4, seed 0). Its fp32 encoder (fp16 weights broke it) makes the download
-  5 MB instead of ~2.6 MB.
+- The demo runs one model per scene (seed 0); the evaluation numbers cover all three seeds.
 
 ## Suggested next steps
 
-1. Replace the projector's BatchNorm with LayerNorm (or lower the peak learning rate) and check whether training
-   stabilises early. This would also let fp16 weights halve the download.
+1. ~~LayerNorm projector~~: done. Training is stable ~10× earlier, fp16 now works, and the demo download fell
+   from 5.0 to 2.8 MB. Test success is 99-100% (see WRITEUP finding 9).
 2. ~~Longer tasks~~: done with subgoals from a latent waypoint graph (see above). Next would be a learned value
    function instead of a frame bank, for worlds too big to cover densely.
 3. Harder scenes: distractors, partial observability or stochastic dynamics, where pixel-free prediction should

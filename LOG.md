@@ -107,3 +107,10 @@
   (4 steps), 83->100% (8 steps). It also showed the latent cost is not flat beyond the basin (weak slope,
   7.5 -> 9.4 from 20 to 110 px), so WRITEUP finding 2, REPORT and the demo text were corrected.
   Demo: scene captions under the tabs make the two scenes' goals explicit.
+- 10:44 LayerNorm projector (next step 1): two-room fs4, 3 seeds. Val 16-step error < 0.2 by step 600 (BatchNorm:
+  ~5,800); final read-out 0.50-0.62 px (vs 0.80); test 0.99 / 1.00 / 0.99 (vs 1.00 x3). Encoder fp16 error 0.00045
+  (BatchNorm 0.07), so fp16 storage works: demo model download 5.0 -> 2.8 MB. Browser planner with the LayerNorm
+  seed-0 model: 1.00 on the 100 test tasks (BatchNorm demo model: 0.99). Swapped the two-room demo model.
+  Local GPU hit 86 C and thermal-throttled (one run took 33 min), so the push LayerNorm runs moved to Kaggle.
+  Push v2 on Kaggle (2x data, 90% pushing, LayerNorm, 12k steps): test 0.40 x3 (short 0.80-0.86, long 0.15-0.18)
+  vs v1 0.39 (short 0.74, long 0.19): more data helps short pushes only.

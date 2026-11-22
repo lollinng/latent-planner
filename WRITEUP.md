@@ -64,7 +64,8 @@ CEM, the same CEM with the true simulator and the true straight-line distance as
 |---|---|---|---|---|---|---|
 | Latent CEM, LeWM-style (λ=0.09) | 3 | 100 ± 0% | 100 ± 0% | 100 ± 0% | 10.3 | 1.00, 1.00, 1.00 |
 | Latent CEM, frameskip 4 (λ=0.09) | 3 | 100 ± 0% | 100 ± 0% | 100 ± 0% | 9.4 | 1.00, 1.00, 1.00 |
-| Same planner in the browser (JS + ONNX Runtime Web, frameskip 4, seed 0) | 1 | 99% | 100% | 98% | 9.2 | 0.99 |
+| Latent CEM, frameskip 4, LayerNorm projector | 3 | 99 ± 0% | 100 ± 0% | 99 ± 1% | 9.4 | 0.99, 1.00, 0.99 |
+| Same planner in the browser (JS + ONNX Runtime Web, ln_fs4_lam0.09_s0) | 1 | 100% | 100% | 100% | 9.8 | 1.00 |
 | Latent CEM, no SIGReg (λ=0) | 3 | 6 ± 0% | 10 ± 2% | 1 ± 1% | 16.2 | 0.06, 0.06, 0.05 |
 | Oracle CEM: true simulator, straight-line cost | - | 87% | 100% | 74% | 6.8 | - |
 | Straight line to goal (true positions) | - | 70% | 100% | 40% | 5.6 | - |
@@ -123,7 +124,7 @@ the latent variance for most of training and only drops in the last ~1,500 steps
 training curves). Every final model is good, but the result leans on the schedule. Validation runs the encoder in
 eval mode, and the projector's BatchNorm sees pre-normalisation features with running variance of only 1e-7 to
 7e-5, so small drifts in its running statistics get amplified; the same amplification is why fp16 weights break
-the frameskip-4 encoder. A LayerNorm projector or a lower peak learning rate would be the first things to try.
+the frameskip-4 encoder. Replacing that BatchNorm with LayerNorm fixed both (finding 9).
 
 **6. Frameskip 4 is the browser model.** Predicting 4 env steps at a time (LeWM uses 5) cuts the predictor calls
 per plan by 4×. Planning in Chrome on this laptop drops from ~800 ms to ~220 ms per re-plan (~0.9 s with 4× CPU
@@ -174,6 +175,15 @@ How the subgoal is chosen matters more than the graph: aiming at the farthest no
 picked a node ~1 px away, the agent stalled, and success fell to 2% on far tasks at 4 steps. The "beyond" rule was
 chosen on the tuning tasks; the far task set was designed after seeing the short-horizon numbers. Details:
 [results/horizon/SUBGOAL.md](results/horizon/SUBGOAL.md).
+
+**9. A LayerNorm projector fixes the late-settling training.** Swapping the projector's BatchNorm for LayerNorm
+(frameskip 4, 3 seeds, everything else equal) makes the 16-step validation error drop below 0.2 by step 600,
+against step ~5,800 with BatchNorm (0.11 vs 25 at step 1,000). The final models are slightly sharper (read-out
+0.50-0.62 px vs 0.80 px; rollout error 0.043-0.046 vs 0.047), and test success is 99/100/99% vs 100/100/100%:
+two misses in 300 tasks, within noise. Its encoder also survives fp16 weight storage (error 0.00045 vs 0.07),
+which roughly halves the browser download, so the demo now runs the LayerNorm model (seed 0): its browser planner
+scores 100% on the test tasks with 2.8 MB of model files, against 99% and 5.0 MB for the BatchNorm model it
+replaced.
 
 ## Scene 2: Push (stretch goal, partly works)
 
@@ -227,9 +237,9 @@ problem is the model's imagined contact dynamics, not the search:
 `planner.py`, with one ONNX call per CEM iteration scoring all 300 samples over the full horizon), and `main.js`
 (loop, drawing, input). The encoder and the unrolled predictor are exported to ONNX and run with ONNX Runtime Web
 1.31.1 on wasm (one thread, since static hosting has no cross-origin isolation). Large weights are stored as fp16
-with a Cast back to fp32 when ONNX Runtime's output stays within 2e-2 of PyTorch; the frameskip-4 encoder fails
-that check (its projector BatchNorm sees features with running variance ~1e-7, which amplifies rounding upstream),
-so it ships as fp32. The imagined path is drawn with a linear probe from z to (x, y) fitted after training; the
+with a Cast back to fp32 when ONNX Runtime's output stays within 2e-2 of PyTorch. The original BatchNorm
+frameskip-4 encoder failed that check (its projector BatchNorm sees features with running variance ~1e-7, which
+amplifies rounding upstream) and shipped as fp32; the LayerNorm model now in the demo passes it (finding 9). The imagined path is drawn with a linear probe from z to (x, y) fitted after training; the
 planner never uses it. The cost map uses precomputed embeddings of a 1 px grid of positions.
 
 Tested headless in Chrome and WebKit at 1200×900 and 390×844 (`tests/web_smoke.py`): the page loads, plans and
@@ -242,9 +252,10 @@ reaches goals with no horizontal overflow.
 - With short horizons the planner fails on long tasks unless it plans through subgoals (finding 8); the waypoint
   graph needs a dense bank of training frames, which is easy in a world this small.
 - One planning seed per trained model; the spread across seeds is training variance only.
-- The demo uses one model (frameskip 4, seed 0); the evaluation numbers cover all three seeds. Its browser
-  planner (same algorithm, JS random numbers, ONNX Runtime Web, fp16 predictor weights) scores 99% on the test
-  tasks vs 100% in Python; the one miss has its goal in the corner of the doorway.
+- The demo uses one model (frameskip 4, LayerNorm projector, seed 0); the evaluation numbers cover all three
+  seeds. Its browser planner (same algorithm, JS random numbers, ONNX Runtime Web, fp16 weights) scores 100% on
+  the test tasks. The BatchNorm model it replaced scored 99% in the browser; that one miss had its goal in the
+  corner of the doorway.
 
 ## Engineering notes
 

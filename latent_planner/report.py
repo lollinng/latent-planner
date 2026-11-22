@@ -81,7 +81,8 @@ def main() -> None:
     g = ev[ev.method == "browser_cem"].tail(1)
     if not g.empty:
         r = g.iloc[0]
-        rows.insert(sum(x["ours"] for x in rows), {"label": "Same planner in the browser (JS + ONNX Runtime Web, frameskip 4, seed 0)",
+        demo = str(r.run).split("(")[-1].rstrip(")") if "(" in str(r.run) else "demo model"
+        rows.insert(sum(x["ours"] for x in rows), {"label": f"Same planner in the browser (JS + ONNX Runtime Web, {demo})",
                      "ours": True, "n_seeds": 1, "success": r.success, "success_same": r.success_same,
                      "success_cross": r.success_cross, "steps": r.mean_steps_success,
                      "sec_per_replan": r.sec_per_replan, "per_seed": [round(r.success, 3)]})

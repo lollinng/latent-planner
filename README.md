@@ -13,7 +13,7 @@ live in the browser.
 - **Plans by imagining.** The cross-entropy method samples action sequences, rolls the predictor forward in
   embedding space, and picks the one whose imagined future gets closest to the goal image's embedding.
 - **Runs in the browser.** The environment is ported to JS bit-exactly (same pixels as training), the model is
-  exported to ONNX (5.0 MB) and planning runs with ONNX Runtime Web.
+  exported to ONNX (2.8 MB) and planning runs with ONNX Runtime Web.
 
 ## Results (100 fixed test tasks, half need the door)
 
@@ -21,7 +21,7 @@ live in the browser.
 |---|---|---|
 | **Latent CEM, LeWM-style (λ=0.09), 3 seeds** | **100%** | **100%** |
 | **Latent CEM, frameskip 4 (browser model), 3 seeds** | **100%** | **100%** |
-| Same planner running in the browser (JS + ONNX Runtime Web) | 99% | 98% |
+| Same planner running in the browser (JS + ONNX Runtime Web) | 100% | 100% |
 | Latent CEM without SIGReg (λ=0), 3 seeds | 6% | 1% |
 | Oracle CEM: true simulator, straight-line cost | 87% | 74% |
 | Straight line to goal (true positions) | 70% | 40% |
