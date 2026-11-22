@@ -22,6 +22,13 @@ jobs:
       - uses: actions/configure-pages@v6
       # Lets the page fetch model files from jsDelivr pinned to this exact commit (falls back to Pages).
       - run: echo '{"repo":"${{ github.repository }}","sha":"${{ github.sha }}"}' > web/deploy.json
+      # Warm jsDelivr for this commit's model files before the page goes live, so the first visitor after a
+      # deploy doesn't wait while jsDelivr fetches them from GitHub (seen: 37 s cold vs 3 s warm). Best effort.
+      - run: |
+          for f in web/model*/*.onnx web/model*/*.bin; do
+            curl -s -o /dev/null --max-time 60 -w "%{http_code} %{time_total}s $f\n" \
+              "https://cdn.jsdelivr.net/gh/${{ github.repository }}@${{ github.sha }}/$f" || true
+          done
       - uses: actions/upload-pages-artifact@v5
         with:
           path: web
