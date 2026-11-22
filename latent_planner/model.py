@@ -27,6 +27,7 @@ class ModelConfig:
     pred_hidden: int = 256
     pred_layers: int = 2
     frameskip: int = 1  # env steps per predictor step; the predictor sees the k-step action chunk (2k values)
+    proj_norm: str = "bn"  # projector normalisation: "bn" (LeWM's BatchNorm) or "ln" (LayerNorm, per sample)
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -46,10 +47,12 @@ class Encoder(nn.Module):
         self.convs = nn.Sequential(*layers)
         side = 64 // (2 ** len(cfg.enc_channels))
         self.fc = nn.Linear(c_in * side * side, cfg.enc_feat)
-        # Projector as in LeWM: MLP with BatchNorm. SIGReg is applied to its output.
+        # Projector as in LeWM: MLP with BatchNorm (or LayerNorm, see ModelConfig.proj_norm). SIGReg is applied to
+        # its output.
+        norm = nn.BatchNorm1d(cfg.proj_hidden) if cfg.proj_norm == "bn" else nn.LayerNorm(cfg.proj_hidden)
         self.proj = nn.Sequential(
             nn.Linear(cfg.enc_feat, cfg.proj_hidden),
-            nn.BatchNorm1d(cfg.proj_hidden),
+            norm,
             nn.GELU(),
             nn.Linear(cfg.proj_hidden, cfg.latent_dim),
         )
