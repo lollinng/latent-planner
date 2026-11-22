@@ -98,6 +98,8 @@ def _static_layer() -> np.ndarray:
 
 
 _STATIC = _static_layer()
+_STATIC_U8 = np.floor(_STATIC + 0.5).astype(np.uint8)
+assert np.array_equal(_STATIC_U8, _STATIC)  # static colours are integers
 _SUB = (np.arange(SS, dtype=np.float64) + 0.5) / SS
 
 
@@ -126,9 +128,14 @@ def render(pos: np.ndarray) -> np.ndarray:
 
 
 def render_batch(pos: np.ndarray) -> np.ndarray:
-    """Vectorised render for many states, identical output to render(). pos (N, 2) -> (N, 64, 64, 3) uint8."""
+    """Vectorised render for many states, identical output to render(). pos (N, 2) -> (N, 64, 64, 3) uint8.
+
+    Memory: the output starts as a uint8 copy of the static layer (all static colours are integers, so rounding
+    leaves them unchanged) and only the 10x10 window around each agent is blended in float64. Peak extra memory is
+    about N * 13 kB, so callers should still render in chunks (see data.py).
+    """
     n = pos.shape[0]
-    out = np.broadcast_to(_STATIC, (n, SIZE, SIZE, 3)).copy()
+    out = np.broadcast_to(_STATIC_U8, (n, SIZE, SIZE, 3)).copy()
     # 10x10 pixel window around each agent covers radius 3 plus margins.
     W = 10
     j0 = np.clip(np.floor(pos[:, 0] - AGENT_R).astype(int) - 1, 0, SIZE - W)
@@ -143,9 +150,9 @@ def render_batch(pos: np.ndarray) -> np.ndarray:
     rows = ii[:, :, None]
     cols = jj[:, None, :]
     nidx = np.arange(n)[:, None, None]
-    patch = out[nidx, rows, cols]  # (n, W, W, 3)
-    out[nidx, rows, cols] = patch * (1.0 - c) + AGENT * c
-    return np.floor(out + 0.5).astype(np.uint8)
+    patch = _STATIC[rows, cols]  # (n, W, W, 3) float64
+    out[nidx, rows, cols] = np.floor(patch * (1.0 - c) + AGENT * c + 0.5).astype(np.uint8)
+    return out
 
 
 # ---------------------------------------------------------------------------------------------------------------

@@ -6,12 +6,18 @@ crosses the door often enough:
   - "waypoint": a noisy go-to-random-point controller that routes through the door when the target is in the
     other room. It is only a data collector; the world model never sees its targets.
 
-Usage: python -m latent_planner.data --episodes 2000 --steps 48 --seed 0 --out data/train.npz
+Usage: python -m latent_planner.data --episodes 2000 --steps 48 --seed 0 --out data/train
+
+Frames are streamed to disk in chunks (the first version built all frames in RAM as float64 and was OOM-killed).
 """
 
 from __future__ import annotations
 
 import argparse
+import gc
+import json
+import os
+import resource
 import time
 from pathlib import Path
 
@@ -62,15 +68,72 @@ def rollout(rng: np.random.Generator, steps: int, policy: str) -> tuple[np.ndarr
     return pos, acts
 
 
-def generate(episodes: int, steps: int, seed: int, waypoint_frac: float = 0.4) -> dict[str, np.ndarray]:
+def rss_gb() -> float:
+    """Current resident set size of this process in GB (Linux)."""
+    with open("/proc/self/statm") as f:
+        return int(f.read().split()[1]) * os.sysconf("SC_PAGE_SIZE") / 1e9
+
+
+def peak_rss_gb() -> float:
+    return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1e6  # ru_maxrss is in kB on Linux
+
+
+def generate(out_dir: str | Path, episodes: int, steps: int, seed: int, waypoint_frac: float = 0.4,
+             chunk: int = 64, max_rss_gb: float = 3.0) -> dict:
+    """Generate a dataset straight to disk, memory-bounded.
+
+    Writes out_dir/frames.npy (uint8, (E, T+1, 64, 64, 3)) by appending chunk episodes at a time after the header,
+    plus pos.npy (float32, (E, T+1, 2)), actions.npy (float32, (E, T, 2)) and meta.json. RAM use is about
+    chunk * (T+1) * 12 kB for frames plus small per-chunk temporaries, independent of the episode count.
+    Aborts if RSS exceeds max_rss_gb, so a bug can't take the machine down again.
+    """
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
     rng = np.random.default_rng(seed)
+    frames_path = out_dir / "frames.npy"
+    shape = (episodes, steps + 1, env.SIZE, env.SIZE, 3)
+    # Plain sequential writes after a .npy header (no memmap), so written pages never count toward our RSS.
+    fh = open(frames_path, "wb")
+    np.lib.format.write_array_header_1_0(fh, {"descr": "|u1", "fortran_order": False, "shape": shape})
     P = np.empty((episodes, steps + 1, 2))
     A = np.empty((episodes, steps, 2))
-    for e in range(episodes):
-        policy = "waypoint" if rng.random() < waypoint_frac else "wander"
-        P[e], A[e] = rollout(rng, steps, policy)
-    frames = env.render_batch(P.reshape(-1, 2)).reshape(episodes, steps + 1, env.SIZE, env.SIZE, 3)
-    return {"frames": frames, "pos": P.astype(np.float32), "actions": A.astype(np.float32)}
+    policies = []
+    t0 = time.time()
+    for e0 in range(0, episodes, chunk):
+        e1 = min(e0 + chunk, episodes)
+        for e in range(e0, e1):
+            policy = "waypoint" if rng.random() < waypoint_frac else "wander"
+            policies.append(policy)
+            P[e], A[e] = rollout(rng, steps, policy)
+        imgs = env.render_batch(P[e0:e1].reshape(-1, 2))
+        fh.write(np.ascontiguousarray(imgs).tobytes())
+        del imgs
+        fh.flush()
+        gc.collect()
+        r = rss_gb()
+        if r > max_rss_gb:
+            raise MemoryError(f"RSS {r:.2f} GB > limit {max_rss_gb} GB after {e1} episodes; lower --chunk")
+        if (e0 // chunk) % 8 == 0 or e1 == episodes:
+            print(f"  {e1}/{episodes} episodes, rss {r:.2f} GB, {time.time() - t0:.0f}s", flush=True)
+    fh.close()
+    assert np.load(frames_path, mmap_mode="r").shape == shape
+    np.save(out_dir / "pos.npy", P.astype(np.float32))
+    np.save(out_dir / "actions.npy", A.astype(np.float32))
+    cross = float((np.sign(P[:, :, 0] - 32).std(axis=1) > 0).mean())
+    meta = {"episodes": episodes, "steps": steps, "seed": seed, "waypoint_frac": waypoint_frac,
+            "waypoint_episodes": policies.count("waypoint"), "frac_cross_door": cross,
+            "env": {"SIZE": env.SIZE, "SPEED": env.SPEED, "SUBSTEPS": env.SUBSTEPS, "AGENT_R": env.AGENT_R,
+                    "DOOR": [env.DOOR_Y0, env.DOOR_Y1], "WALL_X": [env.WALL_X0, env.WALL_X1]},
+            "seconds": round(time.time() - t0, 1), "peak_rss_gb": round(peak_rss_gb(), 3)}
+    (out_dir / "meta.json").write_text(json.dumps(meta, indent=2))
+    return meta
+
+
+def load(data_dir: str | Path) -> dict[str, np.ndarray]:
+    """Open a generated dataset. frames is a read-only memmap (no RAM cost until touched)."""
+    d = Path(data_dir)
+    return {"frames": np.load(d / "frames.npy", mmap_mode="r"), "pos": np.load(d / "pos.npy"),
+            "actions": np.load(d / "actions.npy"), "meta": json.loads((d / "meta.json").read_text())}
 
 
 def main() -> None:
@@ -78,17 +141,15 @@ def main() -> None:
     ap.add_argument("--episodes", type=int, default=2000)
     ap.add_argument("--steps", type=int, default=48)
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--out", type=str, default="data/train.npz")
+    ap.add_argument("--chunk", type=int, default=64, help="episodes rendered per batch")
+    ap.add_argument("--max-rss-gb", type=float, default=3.0)
+    ap.add_argument("--out", type=str, default="data/train")
     args = ap.parse_args()
-    t0 = time.time()
-    d = generate(args.episodes, args.steps, args.seed)
-    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-    np.savez(args.out, **d)
-    cross = (np.sign(d["pos"][:, :, 0] - 32).std(axis=1) > 0).mean()
-    print(
-        f"wrote {args.out}: frames {d['frames'].shape} ({d['frames'].nbytes / 1e9:.2f} GB), "
-        f"{cross:.0%} of episodes cross the door, {time.time() - t0:.0f}s"
-    )
+    meta = generate(args.out, args.episodes, args.steps, args.seed, chunk=args.chunk, max_rss_gb=args.max_rss_gb)
+    gb = args.episodes * (args.steps + 1) * env.SIZE * env.SIZE * 3 / 1e9
+    print(f"wrote {args.out}/: {args.episodes} x {args.steps + 1} frames ({gb:.2f} GB on disk), "
+          f"{meta['frac_cross_door']:.0%} of episodes cross the door, {meta['seconds']:.0f}s, "
+          f"peak RSS {meta['peak_rss_gb']:.2f} GB")
 
 
 if __name__ == "__main__":
