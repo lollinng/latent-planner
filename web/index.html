@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LatentPlanner</title>
+  <meta name="description" content="A small JEPA world model learned a two-room world from pixels and plans routes in its own latent space, live in your browser.">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>LatentPlanner</h1>
+    <p class="lede">A 1.2M-parameter world model learned this two-room world from pixels alone: no rewards, no
+      positions, no map. Tap anywhere to set a goal. It plans a route by imagining futures in its own latent space,
+      live in your browser.</p>
+  </header>
+
+  <main class="app">
+    <section class="stage" aria-label="Environment">
+      <div class="arena-wrap" id="arenaWrap">
+        <canvas id="arena" width="64" height="64" aria-label="The 64 by 64 pixel frame the model sees"></canvas>
+        <canvas id="overlay" aria-hidden="true"></canvas>
+        <div class="loading" id="loading"><div class="bar"><span id="loadBar"></span></div><p id="loadText">Loading model…</p></div>
+      </div>
+      <div class="controls">
+        <button id="play" type="button">Pause</button>
+        <button id="newTask" type="button">New goal</button>
+        <button id="nudge" type="button">Teleport agent</button>
+      </div>
+      <div class="toggles">
+        <label><input type="checkbox" id="showPlan" checked> <span class="sw plan"></span>Imagined path</label>
+        <label><input type="checkbox" id="showCost"> <span class="sw cost"></span>Planner's cost map</label>
+      </div>
+      <p class="hint">Tap to set a goal. Drag the agent to move it.</p>
+    </section>
+
+    <aside class="panel" aria-label="What the model is doing">
+      <div class="card eyes">
+        <figure><canvas id="seeNow" width="64" height="64"></canvas><figcaption>Input now</figcaption></figure>
+        <span class="arrow" aria-hidden="true">→</span>
+        <figure><canvas id="seeGoal" width="64" height="64"></canvas><figcaption>Goal image</figcaption></figure>
+      </div>
+      <div class="card">
+        <div class="row"><span class="label">Surprise</span><span class="value" id="surpriseVal">–</span></div>
+        <canvas id="spark" class="spark"></canvas>
+        <p class="small">How far the real next embedding landed from where the model predicted it would. Drag or
+          teleport the agent to surprise it.</p>
+      </div>
+      <dl class="card stats">
+        <div><dt>Status</dt><dd id="status">Loading</dd></div>
+        <div><dt>Steps</dt><dd id="steps">0</dd></div>
+        <div><dt>Plan time</dt><dd id="planMs">–</dd></div>
+        <div><dt>Imagined per plan</dt><dd id="search">–</dd></div>
+        <div><dt>Runtime</dt><dd id="backend">–</dd></div>
+      </dl>
+    </aside>
+  </main>
+
+  <section class="explain">
+    <h2>How it works</h2>
+    <ol class="steps">
+      <li><strong>Learn.</strong> From 2,000 random trajectories (98k frames), an encoder maps each 64×64 frame to a
+        32-number embedding, and a predictor learns to guess the next embedding from the current one and the action.
+        The loss is the LeWM / LeJEPA recipe: next-embedding error plus SIGReg, a term that keeps embeddings spread
+        like a Gaussian so they can't collapse. No pixels are ever reconstructed.</li>
+      <li><strong>Imagine.</strong> To plan, the browser samples hundreds of action sequences and runs the predictor
+        forward 20 steps for each, entirely in embedding space.</li>
+      <li><strong>Choose.</strong> The cross-entropy method keeps the sequences whose imagined embeddings get
+        closest to the goal image's embedding, refines them for a few rounds, executes the first 4 steps, then plans
+        again from the new frame.</li>
+    </ol>
+    <p>The dotted path is decoded with a linear read-out fitted after training, only to draw it; the planner never
+      sees positions. Turn on the cost map to see what the planner optimises: distance in embedding space is a sharp
+      basin around the goal and flat elsewhere, not a map of the rooms. Routes through the door come from imagining
+      far enough ahead to find the basin.</p>
+    <div id="results"></div>
+  </section>
+
+  <footer class="foot">
+    <p>Environment, model and planner are written from scratch for this demo. Objective: LeWM (Maes et al.)
+      and LeJEPA's SIGReg (Balestriero &amp; LeCun, 2025). <a id="repoLink" href="#">Code and write-up</a>.</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.1/dist/ort.wasm.min.js"></script>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
