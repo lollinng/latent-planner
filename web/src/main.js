@@ -26,6 +26,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const SCENES = {
   tworoom: {
     dir: "model/",
+    caption: "Scene 1: walk the red dot to the yellow ring. The wall only opens at the door.",
     hint: "Tap to set a goal. Drag the agent to move it.",
     note: "",
     render: E.render,
@@ -58,6 +59,7 @@ const SCENES = {
   },
   push: {
     dir: "model_push/",
+    caption: "Scene 2: the red dot has to shove the teal block onto the dashed yellow square.",
     hint: "Tap where the block should go. Drag the agent or the block to move them.",
     note: "Harder scene. On 100 test pushes this model gets the block within 3 px of its target 39% of the time: "
       + "74% for short pushes, 19% for long ones that need it to walk around the block first. Its imagined "
@@ -513,6 +515,7 @@ async function switchScene(name, first = false) {
   for (const b of document.querySelectorAll("[data-scene]")) b.setAttribute("aria-pressed", String(b.dataset.scene === name));
   ui.costToggle.hidden = name !== "tworoom";
   ui.hint.textContent = scene.hint;
+  $("sceneCaption").textContent = scene.caption;
   ui.sceneNote.textContent = scene.note;
   ui.sceneNote.hidden = !scene.note;
   resetScene();

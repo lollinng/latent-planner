@@ -125,10 +125,12 @@ PUSH_DATA = ["python -m latent_planner.data --scene push --episodes 2000 --seed 
 PUSH_EVAL_TUNE = ["python -m latent_planner.eval_push --runs runs/{name} --taskset tune --tag {tag}"]
 
 
-def push(slug: str, jobs: list[tuple[str, str]], tag: str, scene: str = "tworoom") -> None:
+def push(slug: str, jobs: list[tuple[str, str]], tag: str, scene: str = "tworoom",
+         data_cmds: list[str] | None = None, eval_cmds: list[str] | None = None) -> None:
     wd = JOBS_DIR / slug
     wd.mkdir(parents=True, exist_ok=True)
-    data_cmds, eval_cmds = (PUSH_DATA, PUSH_EVAL_TUNE) if scene == "push" else (TWOROOM_DATA, TWOROOM_EVAL)
+    d0, e0 = (PUSH_DATA, PUSH_EVAL_TUNE) if scene == "push" else (TWOROOM_DATA, TWOROOM_EVAL)
+    data_cmds, eval_cmds = data_cmds or d0, eval_cmds or e0
     src = (KERNEL_TEMPLATE.replace("__PAYLOAD__", payload()).replace("__JOBS__", repr(jobs))
            .replace("__TAG__", tag).replace("__DATA_CMDS__", repr(data_cmds)).replace("__EVAL_CMDS__", repr(eval_cmds)))
     (wd / "script.py").write_text(src)
@@ -198,13 +200,16 @@ def main() -> None:
     ap.add_argument("--jobs", nargs="*", default=[], help='"name=train args" entries')
     ap.add_argument("--tag", default="main")
     ap.add_argument("--scene", choices=["tworoom", "push"], default="tworoom")
+    ap.add_argument("--data-cmd", action="append", default=None, help="override the data commands (repeatable)")
+    ap.add_argument("--eval-cmd", action="append", default=None,
+                    help="override the per-job eval commands; {name} and {tag} are filled in (repeatable)")
     ap.add_argument("--poll", type=int, default=60)
     ap.add_argument("--timeout", type=int, default=6 * 3600)
     a = ap.parse_args()
     if a.action == "push":
         jobs = [tuple(j.split("=", 1)) for j in a.jobs]
         assert jobs, "no jobs"
-        push(a.slug, jobs, a.tag, a.scene)
+        push(a.slug, jobs, a.tag, a.scene, a.data_cmd, a.eval_cmd)
     elif a.action == "wait":
         print(wait(a.slug, a.poll, a.timeout))
     else:
