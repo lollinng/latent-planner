@@ -78,3 +78,17 @@
   val). Cross-hardware re-run lam 0.09 s0: 1.00 (same as local). Sweep (3 seeds each): lam 0.01 1.00, 0.03 1.00,
   0.3 0.99, 1.0 0.93 (other room 0.86). Rollout error 0.010 -> 0.057 and probe 0.26 -> 2.93 px as lam goes
   0.01 -> 1. SIGReg needs to be on but not strong; 0.09 sits in the flat region. Added to RESULTS.md/WRITEUP.md.
+- 08:05 Next goal (M8, stretch): Scene 2 "Push". Kinematic axis-separated push env (env_push.py), bit-exact JS port
+  (web/src/env_push.js, parity test over 181 contact/wall states), push behaviour policy + wander for data
+  (2000 + 200 episodes, 83% move the block > 5 px, peak RAM 0.15 GB), eval_push.py with tasks taken from real push
+  rollouts (success = block within 3 px within 60 steps). Tuning-set baselines: random 0.01, scripted pusher (true
+  positions) 0.85, oracle CEM (true simulator, state-distance cost) 0.57.
+- 08:18 Teammate session asked for REPORT.md and for re-verifying the live page after every push. Re-check found the
+  08:07 Pages deploy had failed ("No artifacts named github-pages"; artifact listing lag), live site still on the
+  previous good build. Fixed by moving to current action majors and separate build/deploy jobs; live re-tested OK.
+  REPORT.md written.
+- 08:24 Push fs4 lam 0.09 s0 (6000 steps): rollout error 0.10-0.20, read-out 3.6 px (agent) / 4.3 px (block) vs
+  0.7 px in two-room. Tuning tasks: 0.32 (short 0.53, long 0.23). Longer horizon doesn't help (0.32 at 32 steps,
+  0.27 with 8-step holds). Failures do push the block but not toward the goal (median 30 -> 31 px), so the
+  imagined contact dynamics are the bottleneck. Sent 4 training variants to Kaggle (lam 0.03 / 0.09, 6k / 15k
+  steps, frameskip 4 / 1).
