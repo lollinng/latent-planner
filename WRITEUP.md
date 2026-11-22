@@ -246,8 +246,33 @@ problem is the model's imagined contact dynamics, not the search:
   32% on the tuning tasks, the same as plain CEM. With looser neighbour links the graph connects (4 pieces, then 1)
   and scores 31% and 35% (long pushes 23% and 27% vs 23%), within noise, so it was not run on the test tasks.
   Subgoals help when the route is the problem (long navigation), not when the model's contact predictions are.
-- Not tried: a bigger latent or predictor, and LeWM's longer history (3 frames), which would give the predictor
-  velocity and contact context.
+- Not tried: a bigger latent, and LeWM's longer history (3 frames). History adds little here: the scene is fully
+  observed and has no momentum, so one frame is the whole state.
+
+#### Where the push planner loses: dynamics, not the cost
+
+Swapping one part at a time for the real thing, on the 100 tuning tasks with the same CEM (5 knots × 4 steps,
+300 samples, 10 iterations) unless noted:
+
+| Dynamics | Cost | Success | Short | Long |
+|---|---|---|---|---|
+| Learned predictor (push_fs4_s0) | Latent distance to the goal image | 32% | 53% | 23% |
+| True simulator | True-state distance (oracle) | 57% | 80% | 47% |
+| True simulator | Latent distance (every candidate rendered and encoded) | **86%** | **100%** | **80%** |
+| True simulator | True-state distance, 8 knots, 1000 samples × 15 iterations | 81% | 93% | 76% |
+| Learned predictor | Latent distance, same bigger search | 36% | 57% | 27% |
+
+- **The embedding is a very good cost.** With true dynamics it gets 86%, more than the hand-written true-state cost
+  (57%) and about the same as the hand-written pusher (85% on these tasks). Its distance seems to weigh block and agent
+  in a way that avoids the local minima of plain state distance (which counts the agent as much as the block).
+- **The learned dynamics are the weak part.** Same cost, learned predictor: 32%. More search, which lifts the
+  oracle from 57% to 81%, does nothing for the learned model (24-36% across 8 settings and two models): extra
+  search mostly finds plans that look good only inside the model.
+- **A bigger predictor helps a little at most** (seed 0, tuning tasks): 256×2 (current) 32%, 512×2 36%, 512×3 40%,
+  1024×2 32%, 1024×3 39%. Plan time grows with it (Python, 100 tasks batched: 0.49 s → 0.96 s for 512×3).
+
+Scripts: `scripts/push_cost_vs_dynamics.py` (uses a batched torch port of the push renderer, checked pixel-exact
+against `env_push.render`), `scripts/push_oracle_horizon.py`, `scripts/push_search.sh`, `scripts/train_push_pred.sh`.
 
 ## Browser demo
 

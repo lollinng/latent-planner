@@ -134,3 +134,12 @@
   embedding (it could plan one knot toward the old goal). Push demo loop: 31 of 64 reached (48%, 120 steps);
   browser planner on 100 JS-generated tasks: 0.30 (60 steps; within noise of 0.37). Two rooms: 8 of 8.
   Colab still not signed in (no browser tools in this session; WSL Chrome has no Google sign-in).
+- 15:20 Push decomposition (tuning tasks, same CEM K5xh4 S300 I10): learned predictor + latent cost 0.32; true sim +
+  true-state cost (oracle) 0.57; true sim + latent cost 0.86 (short 1.00, long 0.80; every candidate rendered and
+  encoded with a pixel-exact batched torch port of the push renderer, 23k frames/s vs 0.8k). So the embedding is
+  a very good cost and the learned contact dynamics are the weak part. More search: oracle 0.57 -> 0.81 (K8xh4
+  S1000 I15); learned models 0.24-0.36 over 8 settings (no gain; doubling the step budget doesn't help the oracle
+  either: stuck, not out of time). Bigger predictor (seed 0): 512x2 0.36, 512x3 0.40, 1024x2 0.32, 1024x3 0.39 vs
+  0.32. Queued: 512x3 seeds 1-2 + test, 12-step rollout loss, frameskip 1, 3x data with 18k steps.
+  Live-check workflow (GitHub runner): both scenes load in 1-2 s, no console errors; push 3 of 12 tasks there,
+  34 of 76 over all demo-loop runs (45%).
