@@ -93,8 +93,9 @@ extra long cross-room tasks it goes from 50% to 83% at 4 steps and from 83% to *
 - **Why it's weaker:** the model's imagined contact dynamics are inaccurate. Prediction error is ~4× the two-room
   model's, and the block position is encoded only to ~4 px. A longer planning horizon didn't help.
   Weaker SIGReg (λ = 0.01) made the model ignore the block: good prediction loss, useless for pushing (17%).
-- Bounded on purpose: the four extra training variants queued on Kaggle never left the queue and were cancelled
-  without using any GPU. The demo states the 39% on the page.
+- Later variants on the Kaggle T4: a LayerNorm projector on the same data scored 32%. Twice the data (90% pushing)
+  with LayerNorm and 12k steps scored 40%: short pushes 83%, long ones still 17%. The demo keeps the 39% model and
+  states that number on the page.
 
 ## Known limitations
 

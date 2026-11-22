@@ -160,8 +160,9 @@ def main() -> None:
         ep = pd.read_csv(res / "eval_push.csv")
         et = ep[(ep.taskset == "test") & (ep.tag == "push")]
         pm = ["success", "success_short", "success_long", "mean_steps_success"]
-        for prefix, plabel in [("push_fs4_s", "Latent CEM (λ=0.09, frameskip 4)"),
-                               ("push_ln_fs4_s", "Latent CEM, LayerNorm projector")]:
+        for prefix, plabel in [("push_fs4_s", "Latent CEM (λ=0.09, frameskip 4), in the demo"),
+                               ("push_ln_fs4_s", "Same, LayerNorm projector"),
+                               ("pushv2_ln_s", "LayerNorm, 2× data (90% pushing), 12k steps")]:
           g = runs_named(et[et.method == "latent_cem"], prefix).drop_duplicates("run", keep="last")
           if not g.empty:
             mu, sd = g[pm].mean(), g[pm].std(ddof=0)

@@ -198,7 +198,9 @@ image shows the agent where a pusher would be.
 
 | Method | Seeds | Success | Short push (< 20 px) | Long push | Steps (successes) | Per-seed |
 |---|---|---|---|---|---|---|
-| Latent CEM (λ=0.09, frameskip 4) | 3 | 39 ± 1% | 74 ± 0% | 19 ± 2% | 11.2 | 0.40, 0.37, 0.39 |
+| Latent CEM (λ=0.09, frameskip 4), in the demo | 3 | 39 ± 1% | 74 ± 0% | 19 ± 2% | 11.2 | 0.40, 0.37, 0.39 |
+| Same, LayerNorm projector | 3 | 32 ± 3% | 58 ± 11% | 18 ± 2% | 10.7 | 0.35, 0.28, 0.33 |
+| LayerNorm, 2× data (90% pushing), 12k steps | 3 | 40 ± 0% | 83 ± 2% | 17 ± 1% | 9.4 | 0.40, 0.40, 0.40 |
 | Hand-written pusher (true positions) | - | 87% | 100% | 80% | 23.3 | - |
 | Oracle CEM: true simulator, state-distance cost | - | 64% | 91% | 49% | 11.1 | - |
 | Random actions | - | 1% | 3% | 0% | 9.0 | - |
@@ -214,6 +216,12 @@ image shows the agent where a pusher would be.
 | push_fs4_s0 | K4xh8 S300 I10 rw1.0 | 27% | 50% | 17% | 4.3 |
 | push_fs4_s1 | K5xh4 S300 I10 rw1.0 | 31% | 57% | 20% | 4.0 |
 | pushv_l0.01_fs4_15k_s0 | K5xh4 S300 I10 rw1.0 | 17% | 40% | 7% | 13.7 |
+| pushv2_ln_s0 | K5xh4 S300 I10 rw1.0 | 29% | 53% | 19% | 5.5 |
+| pushv2_ln_s1 | K5xh4 S300 I10 rw1.0 | 28% | 50% | 19% | 4.6 |
+| pushv2_ln_s2 | K5xh4 S300 I10 rw1.0 | 30% | 57% | 19% | 5.2 |
+| push_ln_fs4_s0 | K5xh4 S300 I10 rw1.0 | 20% | 33% | 14% | 4.0 |
+| push_ln_fs4_s1 | K5xh4 S300 I10 rw1.0 | 27% | 40% | 21% | 4.8 |
+| push_ln_fs4_s2 | K5xh4 S300 I10 rw1.0 | 22% | 40% | 14% | 3.7 |
 
 **What didn't work, and why.** The planner gets 74% of short pushes but only 19% of long ones, against 87% / 80% for
 a hand-written pusher with true positions. In failures it does push the block, just not toward the target, so the
@@ -228,8 +236,12 @@ problem is the model's imagined contact dynamics, not the search:
   rollout error (0.011-0.016) but the block read-out degrades to 13.7 px and success drops to 17%: the model learns
   to mostly ignore the rarely-moving block, which makes its embeddings easy to predict and useless for pushing.
   Good prediction loss is not evidence of a good planning representation.
-- Not tried, given the time box: more push-heavy data, a bigger latent or predictor, and LeWM's longer history
-  (3 frames).
+- **LayerNorm, which fixed two-room training (finding 9), hurts here:** 32% vs 39% on the same data.
+- **Twice the data, 90% of it pushing, with LayerNorm and 12k steps:** 40%. Short pushes rise to 83% and long ones
+  stay at 17%, so more contact data helps the easy case only. Long pushes, which need the agent to walk around the
+  block, are where the remaining gap to the hand-written pusher (80%) lies.
+- Not tried: a bigger latent or predictor, and LeWM's longer history (3 frames), which would give the predictor
+  velocity and contact context.
 
 ## Browser demo
 

@@ -49,7 +49,9 @@ Rollout error is normalised by the latent variance (1.0 = no better than the mea
 
 | Method | Seeds | Success | Short push (< 20 px) | Long push | Steps (successes) | Per-seed |
 |---|---|---|---|---|---|---|
-| Latent CEM (λ=0.09, frameskip 4) | 3 | 39 ± 1% | 74 ± 0% | 19 ± 2% | 11.2 | 0.40, 0.37, 0.39 |
+| Latent CEM (λ=0.09, frameskip 4), in the demo | 3 | 39 ± 1% | 74 ± 0% | 19 ± 2% | 11.2 | 0.40, 0.37, 0.39 |
+| Same, LayerNorm projector | 3 | 32 ± 3% | 58 ± 11% | 18 ± 2% | 10.7 | 0.35, 0.28, 0.33 |
+| LayerNorm, 2× data (90% pushing), 12k steps | 3 | 40 ± 0% | 83 ± 2% | 17 ± 1% | 9.4 | 0.40, 0.40, 0.40 |
 | Hand-written pusher (true positions) | - | 87% | 100% | 80% | 23.3 | - |
 | Oracle CEM: true simulator, state-distance cost | - | 64% | 91% | 49% | 11.1 | - |
 | Random actions | - | 1% | 3% | 0% | 9.0 | - |
@@ -68,4 +70,7 @@ Rollout error is normalised by the latent variance (1.0 = no better than the mea
 | pushv2_ln_s0 | K5xh4 S300 I10 rw1.0 | 29% | 53% | 19% | 5.5 |
 | pushv2_ln_s1 | K5xh4 S300 I10 rw1.0 | 28% | 50% | 19% | 4.6 |
 | pushv2_ln_s2 | K5xh4 S300 I10 rw1.0 | 30% | 57% | 19% | 5.2 |
+| push_ln_fs4_s0 | K5xh4 S300 I10 rw1.0 | 20% | 33% | 14% | 4.0 |
+| push_ln_fs4_s1 | K5xh4 S300 I10 rw1.0 | 27% | 40% | 21% | 4.8 |
+| push_ln_fs4_s2 | K5xh4 S300 I10 rw1.0 | 22% | 40% | 14% | 3.7 |
 

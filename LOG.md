@@ -114,3 +114,7 @@
   Local GPU hit 86 C and thermal-throttled (one run took 33 min), so the push LayerNorm runs moved to Kaggle.
   Push v2 on Kaggle (2x data, 90% pushing, LayerNorm, 12k steps): test 0.40 x3 (short 0.80-0.86, long 0.15-0.18)
   vs v1 0.39 (short 0.74, long 0.19): more data helps short pushes only.
+- 11:06 Push LayerNorm on the same data (Kaggle; data sha256 matches local): test 0.35 / 0.28 / 0.33 vs BatchNorm
+  0.40 / 0.37 / 0.39, so LayerNorm helps two-room but hurts push. Push demo keeps the BatchNorm model (39%).
+  GitHub Pages is slow to this laptop right now (~140 KB/s even on cache hits; jsDelivr 1.6 MB/s); live page
+  load measured 21-25 s vs 3.5-7 s earlier. Transient CDN issue, not the model change; re-check later.
