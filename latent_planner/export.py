@@ -79,7 +79,8 @@ def fp16_storage(path: Path, min_elems: int = 256) -> None:
     onnx.save(m, str(path))
 
 
-def export(run: Path, final_out: Path, cem: CEMConfig, opset: int = 17, fp16: bool = True) -> dict:
+def export(run: Path, final_out: Path, cem: CEMConfig, opset: int = 17, fp16: bool = True,
+           scene: str = "tworoom", val_dir: str = "data/push_val") -> dict:
     # Write into a temp dir and only replace final_out once every check has passed, so a failed export never
     # leaves the demo with mismatched files.
     out = final_out.parent / (final_out.name + ".tmp")
@@ -89,7 +90,16 @@ def export(run: Path, final_out: Path, cem: CEMConfig, opset: int = 17, fp16: bo
     model = load_model(run / "model.pt", "cpu")
     D = model.cfg.latent_dim
     enc, ro = EncoderExport(model).eval(), RolloutExport(model, cem.hold).eval()
-    frames = torch.from_numpy(env.render_batch(np.array([[10.0, 10.0], [50.0, 30.0]])))
+    if scene == "push":
+        from . import env_push
+
+        def sample_frames(rng, n):
+            return env_push.render_batch(np.stack([env_push.rollout(rng, 10, "push")[0][-1] for _ in range(n)]))
+    else:
+        def sample_frames(rng, n):
+            return env.render_batch(np.stack([env.sample_free(rng) for _ in range(n)]))
+
+    frames = torch.from_numpy(sample_frames(np.random.default_rng(1), 2))
     z0 = torch.randn(7, D)
     knots = torch.rand(7, cem.knots, 2) * 2 - 1
     kw = dict(opset_version=opset, dynamo=False, do_constant_folding=True)
@@ -105,8 +115,7 @@ def export(run: Path, final_out: Path, cem: CEMConfig, opset: int = 17, fp16: bo
     import onnxruntime as ort
 
     rng = np.random.default_rng(0)
-    pos = np.stack([env.sample_free(rng) for _ in range(64)])
-    f = env.render_batch(pos)
+    f = sample_frames(rng, 64)
     with torch.no_grad():
         zt = enc(torch.from_numpy(f)).numpy()
         z0 = torch.from_numpy(zt[:50])
@@ -140,38 +149,59 @@ def export(run: Path, final_out: Path, cem: CEMConfig, opset: int = 17, fp16: bo
 
     from sklearn.linear_model import Ridge
 
-    # Visual-only helpers on a dense 1 px grid of agent positions. grid_z.bin holds the latent of every grid
-    # position (float32, row-major over y then x, NaN where the agent can't be), so the page can draw the
-    # planner's cost landscape ||z(p) - z_goal|| for any goal without running the encoder 3000 times.
-    lo, hi = env.BORDER + env.AGENT_R, env.SIZE - env.BORDER - env.AGENT_R
-    xs = np.arange(lo, hi + 1e-9, 1.0)
-    allp = np.array([[x, y] for y in xs for x in xs])
-    free = np.array([env.is_free(x, y) for x, y in allp])
-    with torch.no_grad():
-        zall = np.concatenate([enc(torch.from_numpy(env.render_batch(allp[i : i + 512]))).numpy()
-                               for i in range(0, len(allp), 512)])
-    zall[~free] = np.nan
-    zall.astype(np.float32).tofile(out / "grid_z.bin")
-    grid, zg = allp[free], zall[free]
-    probe = Ridge(alpha=1e-3).fit(zg, grid)
-    probe_rmse = float(np.sqrt(((probe.predict(zg) - grid) ** 2).sum(1).mean()))
+    if scene == "push":
+        # Visual-only read-out z -> (agent x, y, block x, y), fitted on validation frames; no cost-map grid.
+        from . import data as data_mod
+
+        n_ep = min(100, data_mod.num_episodes(val_dir))
+        st = np.load(Path(val_dir) / "pos.npy")[:n_ep].reshape(-1, 4)
+        with torch.no_grad():
+            zg = np.concatenate([enc(torch.from_numpy(data_mod.read_frames(val_dir, i, min(i + 20, n_ep)).reshape(
+                -1, 64, 64, 3))).numpy() for i in range(0, n_ep, 20)])
+        probe = Ridge(alpha=1e-3).fit(zg, st)
+        err = probe.predict(zg) - st
+        probe_rmse = float(np.sqrt((err[:, :2] ** 2).sum(1).mean()))
+        probe_rmse_block = float(np.sqrt((err[:, 2:] ** 2).sum(1).mean()))
+        grid_meta, files = None, ("encoder.onnx", "rollout.onnx")
+        env_meta = {"SIZE": env.SIZE, "SPEED": env_push.SPEED, "SUBSTEPS": env.SUBSTEPS, "AGENT_R": env.AGENT_R,
+                    "BLOCK_H": env_push.BLOCK_H}
+    else:
+        # Visual-only helpers on a dense 1 px grid of agent positions. grid_z.bin holds the latent of every grid
+        # position (float32, row-major over y then x, NaN where the agent can't be), so the page can draw the
+        # planner's cost landscape ||z(p) - z_goal|| for any goal without running the encoder 3000 times.
+        lo, hi = env.BORDER + env.AGENT_R, env.SIZE - env.BORDER - env.AGENT_R
+        xs = np.arange(lo, hi + 1e-9, 1.0)
+        allp = np.array([[x, y] for y in xs for x in xs])
+        free = np.array([env.is_free(x, y) for x, y in allp])
+        with torch.no_grad():
+            zall = np.concatenate([enc(torch.from_numpy(env.render_batch(allp[i : i + 512]))).numpy()
+                                   for i in range(0, len(allp), 512)])
+        zall[~free] = np.nan
+        zall.astype(np.float32).tofile(out / "grid_z.bin")
+        grid, zg = allp[free], zall[free]
+        probe = Ridge(alpha=1e-3).fit(zg, grid)
+        probe_rmse = float(np.sqrt(((probe.predict(zg) - grid) ** 2).sum(1).mean()))
+        probe_rmse_block = None
+        grid_meta = {"x0": float(lo), "step": 1.0, "n": int(len(xs)), "file": "grid_z.bin"}
+        files = ("encoder.onnx", "rollout.onnx", "grid_z.bin")
+        env_meta = {"SIZE": env.SIZE, "SPEED": env.SPEED, "SUBSTEPS": env.SUBSTEPS, "AGENT_R": env.AGENT_R}
     sv = np.linalg.svd(zg - zg.mean(0), compute_uv=False)
 
     summary = json.loads((run / "summary.json").read_text())
     meta = {
-        "run": run.name, "latent_dim": D, "frameskip": model.cfg.frameskip,
+        "run": run.name, "scene": scene, "latent_dim": D, "frameskip": model.cfg.frameskip,
         "cem": {"knots": cem.knots, "hold": cem.hold, "samples": cem.samples, "elites": cem.elites,
                 "iters": cem.iters, "init_std": cem.init_std, "min_std": cem.min_std, "momentum": cem.momentum,
                 "running_w": cem.running_w},
-        "env": {"SIZE": env.SIZE, "SPEED": env.SPEED, "SUBSTEPS": env.SUBSTEPS, "AGENT_R": env.AGENT_R},
+        "env": env_meta,
         "probe": {"W": probe.coef_.round(6).tolist(), "b": probe.intercept_.round(6).tolist(),
-                  "grid_rmse_px": probe_rmse},
-        "grid": {"x0": float(lo), "step": 1.0, "n": int(len(xs)), "file": "grid_z.bin"},
+                  "grid_rmse_px": probe_rmse, "block_rmse_px": probe_rmse_block},
+        "grid": grid_meta,
         "pca_explained_top2": (sv[:2] ** 2 / (sv**2).sum()).round(4).tolist(),
         "train": {k: summary[k] for k in ("val_eff_rank", "probe_rmse_px", "train_seconds")},
         "val_rollout_nmse": [round(x, 5) for x in summary["val_rollout_nmse"]],
         "parity": parity,
-        "bytes": {p.name: p.stat().st_size for p in (out / "encoder.onnx", out / "rollout.onnx", out / "grid_z.bin")},
+        "bytes": {f: (out / f).stat().st_size for f in files},
     }
     (out / "meta.json").write_text(json.dumps(meta))
     if final_out.exists():
@@ -186,9 +216,13 @@ def main() -> None:
     ap.add_argument("--out", type=str, default="web/model")
     ap.add_argument("--samples", type=int, default=300)
     ap.add_argument("--iters", type=int, default=10)
+    ap.add_argument("--knots", type=int, default=5)
+    ap.add_argument("--hold", type=int, default=4)
+    ap.add_argument("--scene", choices=["tworoom", "push"], default="tworoom")
+    ap.add_argument("--val", type=str, default="data/push_val", help="validation data for the push read-out")
     args = ap.parse_args()
-    cem = CEMConfig(samples=args.samples, iters=args.iters, running_w=1.0)
-    m = export(Path(args.run), Path(args.out), cem)
+    cem = CEMConfig(knots=args.knots, hold=args.hold, samples=args.samples, iters=args.iters, running_w=1.0)
+    m = export(Path(args.run), Path(args.out), cem, scene=args.scene, val_dir=args.val)
     print(json.dumps({k: m[k] for k in ("run", "parity", "bytes", "frameskip")}, indent=1),
           f"probe grid rmse {m['probe']['grid_rmse_px']:.2f}px, PCA top-2 explained {m['pca_explained_top2']}")
 

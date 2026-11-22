@@ -36,6 +36,8 @@ import base64, hashlib, io, os, shutil, subprocess, sys, tarfile, time
 PAYLOAD = "__PAYLOAD__"
 JOBS = __JOBS__
 TAG = "__TAG__"
+DATA_CMDS = __DATA_CMDS__
+EVAL_CMDS = __EVAL_CMDS__
 WORK, OUT = "/tmp/lp", "/kaggle/working"
 os.makedirs(WORK, exist_ok=True)
 tarfile.open(fileobj=io.BytesIO(base64.b64decode(PAYLOAD)), mode="r:gz").extractall(WORK)
@@ -51,8 +53,8 @@ def sh(cmd):
 import torch
 print("torch", torch.__version__, "cuda", torch.cuda.is_available(),
       torch.cuda.get_device_name(0) if torch.cuda.is_available() else "no gpu", flush=True)
-sh("python -m latent_planner.data --episodes 2000 --seed 0 --out data/train")
-sh("python -m latent_planner.data --episodes 200 --seed 1 --out data/val")
+for c in DATA_CMDS:
+    sh(c)
 
 def sha(p):
     h = hashlib.sha256()
@@ -61,7 +63,8 @@ def sha(p):
             h.update(b)
     return h.hexdigest()[:16]
 
-for p in ["data/train/frames.npy", "data/train/pos.npy", "data/train/actions.npy", "data/val/pos.npy"]:
+import glob
+for p in sorted(glob.glob("data/*/frames.npy") + glob.glob("data/*/pos.npy") + glob.glob("data/*/actions.npy")):
     print("SHA256", p, sha(p), flush=True)
 
 def save_outputs():
@@ -70,7 +73,7 @@ def save_outputs():
         if os.path.isdir(src):
             shutil.copytree(src, os.path.join(OUT, "runs", name), dirs_exist_ok=True)
     os.makedirs(os.path.join(OUT, "results"), exist_ok=True)
-    for f in ["eval.csv", "analysis.csv"]:
+    for f in ["eval.csv", "analysis.csv", "eval_push.csv"]:
         if os.path.exists(os.path.join("results", f)):
             shutil.copy(os.path.join("results", f), os.path.join(OUT, "results", f))
     if os.path.isdir("results/eval"):
@@ -80,8 +83,8 @@ for name, args in JOBS:
     os.makedirs(f"runs/{name}", exist_ok=True)
     sh(f"python -m latent_planner.train --out runs/{name} {args} > runs/{name}/stdout.txt 2>&1")
     sh(f"tail -3 runs/{name}/stdout.txt")
-    sh(f"python -m latent_planner.eval --runs runs/{name} --taskset test --tag {TAG} --running-w 1.0")
-    sh(f"python -m latent_planner.analyze --runs runs/{name}")
+    for c in EVAL_CMDS:
+        sh(c.format(name=name, tag=TAG))
     save_outputs()  # after every job, so a timeout still leaves results
 print("ALL_JOBS_DONE", flush=True)
 '''
@@ -107,16 +110,27 @@ def payload() -> str:
     with tarfile.open(fileobj=buf, mode="w:gz") as tar:
         for p in sorted((ROOT / "latent_planner").glob("*.py")):
             tar.add(p, arcname=f"latent_planner/{p.name}")
-        for name in ["tasks_test.json", "tasks_tune.json"]:
-            tar.add(ROOT / "results" / name, arcname=f"results/{name}")
+        for name in ["tasks_test.json", "tasks_tune.json", "push_tasks_test.json", "push_tasks_tune.json"]:
+            if (ROOT / "results" / name).exists():
+                tar.add(ROOT / "results" / name, arcname=f"results/{name}")
     return base64.b64encode(buf.getvalue()).decode()
 
 
-def push(slug: str, jobs: list[tuple[str, str]], tag: str) -> None:
+TWOROOM_DATA = ["python -m latent_planner.data --episodes 2000 --seed 0 --out data/train",
+                "python -m latent_planner.data --episodes 200 --seed 1 --out data/val"]
+TWOROOM_EVAL = ["python -m latent_planner.eval --runs runs/{name} --taskset test --tag {tag} --running-w 1.0",
+                "python -m latent_planner.analyze --runs runs/{name}"]
+PUSH_DATA = ["python -m latent_planner.data --scene push --episodes 2000 --seed 10 --out data/push_train",
+             "python -m latent_planner.data --scene push --episodes 200 --seed 11 --out data/push_val"]
+PUSH_EVAL_TUNE = ["python -m latent_planner.eval_push --runs runs/{name} --taskset tune --tag {tag}"]
+
+
+def push(slug: str, jobs: list[tuple[str, str]], tag: str, scene: str = "tworoom") -> None:
     wd = JOBS_DIR / slug
     wd.mkdir(parents=True, exist_ok=True)
+    data_cmds, eval_cmds = (PUSH_DATA, PUSH_EVAL_TUNE) if scene == "push" else (TWOROOM_DATA, TWOROOM_EVAL)
     src = (KERNEL_TEMPLATE.replace("__PAYLOAD__", payload()).replace("__JOBS__", repr(jobs))
-           .replace("__TAG__", tag))
+           .replace("__TAG__", tag).replace("__DATA_CMDS__", repr(data_cmds)).replace("__EVAL_CMDS__", repr(eval_cmds)))
     (wd / "script.py").write_text(src)
     (wd / "jobs.json").write_text(json.dumps({"jobs": jobs, "tag": tag, "pushed": time.strftime("%F %T")}, indent=1))
     (wd / "kernel-metadata.json").write_text(json.dumps({
@@ -159,7 +173,7 @@ def merge(slug: str) -> None:
             continue
         shutil.copytree(d, dst)
         print(f"copied runs/{d.name}")
-    for name in ["eval.csv", "analysis.csv"]:
+    for name in ["eval.csv", "analysis.csv", "eval_push.csv"]:
         src, dst = out / "results" / name, ROOT / "results" / name
         if not src.exists():
             continue
@@ -183,13 +197,14 @@ def main() -> None:
     ap.add_argument("--slug", required=True)
     ap.add_argument("--jobs", nargs="*", default=[], help='"name=train args" entries')
     ap.add_argument("--tag", default="main")
+    ap.add_argument("--scene", choices=["tworoom", "push"], default="tworoom")
     ap.add_argument("--poll", type=int, default=60)
     ap.add_argument("--timeout", type=int, default=6 * 3600)
     a = ap.parse_args()
     if a.action == "push":
         jobs = [tuple(j.split("=", 1)) for j in a.jobs]
         assert jobs, "no jobs"
-        push(a.slug, jobs, a.tag)
+        push(a.slug, jobs, a.tag, a.scene)
     elif a.action == "wait":
         print(wait(a.slug, a.poll, a.timeout))
     else:
