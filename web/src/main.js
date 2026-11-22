@@ -248,8 +248,10 @@ async function loop() {
     S.zPredNext = res.zs.slice((k1 - 1) * D, k1 * D);
     const a = [res.mean[0], res.mean[1]];
     setStatus("Moving");
+    let interrupted = false;
     for (let k = 0; k < meta.cem.hold; k++) {
       while (S.dragging) await sleep(30);
+      if (version !== S.goalVersion || !S.running) { interrupted = true; break; } // new goal or paused
       S.pos = E.stepPos(S.pos, a);
       S.trail.push(S.pos.slice());
       S.steps++;
@@ -266,6 +268,10 @@ async function loop() {
         break;
       }
       await sleep(STEP_MS);
+    }
+    if (interrupted) {
+      S.zPredNext = null; // the first knot was not fully executed, so its prediction doesn't apply
+      continue;
     }
     S.warm = Planner.shift(res.mean);
   }
