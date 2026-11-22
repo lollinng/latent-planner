@@ -1,0 +1,26 @@
+# Load the live demo from GitHub's network (not the dev laptop's) and run both scenes headless: page loads, plans,
+# tasks end (reached or given up) and the demo moves on, no console errors. Runs after each Pages deploy.
+name: live-check
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [pages]
+    types: [completed]
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - run: python3 -m venv .v && .v/bin/pip install -q playwright==1.65.2
+      - name: Two rooms
+        run: .v/bin/python tests/web_smoke.py --url https://prathameshjadhav.in/latent-planner/ --scene tworoom --goals 3 --shots shots
+      - name: Push
+        run: .v/bin/python tests/web_smoke.py --url https://prathameshjadhav.in/latent-planner/ --scene push --goals 3 --shots shots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: shots
