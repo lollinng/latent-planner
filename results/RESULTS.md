@@ -49,14 +49,17 @@ Rollout error is normalised by the latent variance (1.0 = no better than the mea
 
 | Method | Seeds | Success | Short push (< 20 px) | Long push | Steps (successes) | Per-seed |
 |---|---|---|---|---|---|---|
-| Latent CEM (λ=0.09, frameskip 4), in the demo | 3 | 39 ± 1% | 74 ± 0% | 19 ± 2% | 11.2 | 0.40, 0.37, 0.39 |
-| Same, LayerNorm projector | 3 | 32 ± 3% | 58 ± 11% | 18 ± 2% | 10.7 | 0.35, 0.28, 0.33 |
-| LayerNorm, 2× data (90% pushing), 12k steps | 3 | 40 ± 0% | 83 ± 2% | 17 ± 1% | 9.4 | 0.40, 0.40, 0.40 |
+| Latent CEM (λ=0.09, frameskip 4), final-state cost: in the demo | 3 | 52 ± 1% | 84 ± 4% | 34 ± 1% | 15.4 | 0.50, 0.53, 0.52 |
+| Same model, running cost (the demo until 22 Nov) | 3 | 39 ± 1% | 74 ± 0% | 19 ± 2% | 11.2 | 0.40, 0.37, 0.39 |
+| 512×3 predictor, final-state cost | 3 | 55 ± 3% | 86 ± 4% | 38 ± 5% | 17.2 | 0.54, 0.59, 0.52 |
+| 512×3 predictor, running cost | 3 | 45 ± 3% | 84 ± 5% | 24 ± 3% | 11.4 | 0.47, 0.47, 0.40 |
+| LayerNorm projector, running cost | 3 | 32 ± 3% | 58 ± 11% | 18 ± 2% | 10.7 | 0.35, 0.28, 0.33 |
+| LayerNorm, 2× data (90% pushing), 12k steps, running cost | 3 | 40 ± 0% | 83 ± 2% | 17 ± 1% | 9.4 | 0.40, 0.40, 0.40 |
 | Hand-written pusher (true positions) | - | 87% | 100% | 80% | 23.3 | - |
 | Oracle CEM: true simulator, state-distance cost | - | 64% | 91% | 49% | 11.1 | - |
 | Random actions | - | 1% | 3% | 0% | 9.0 | - |
 
-100 fixed test tasks; each goal is the end of a 30-step push from the start. Success = block within 3 px of its target within 60 steps; long = the block must move 20 px or more. Mean ± std over 3 training seeds.
+100 fixed test tasks; each goal is the end of a 30-step push from the start. Success = block within 3 px of its target within 60 steps; long = the block must move 20 px or more. Mean ± std over 3 training seeds. Final-state cost = CEM scores only the last imagined state (running_w 0); the running cost also averages distance along the plan, which penalises the detours long pushes need.
 
 ### Push variants tried on the tuning tasks (seed 0 unless noted)
 
@@ -73,4 +76,27 @@ Rollout error is normalised by the latent variance (1.0 = no better than the mea
 | push_ln_fs4_s0 | K5xh4 S300 I10 rw1.0 | 20% | 33% | 14% | 4.0 |
 | push_ln_fs4_s1 | K5xh4 S300 I10 rw1.0 | 27% | 40% | 21% | 4.8 |
 | push_ln_fs4_s2 | K5xh4 S300 I10 rw1.0 | 22% | 40% | 14% | 3.7 |
+| push_fs4_s0 | K5xh4 S1000 I15 rw1.0 | 31% | 57% | 20% | 4.3 |
+| push_fs4_s0 | K8xh4 S1000 I15 rw1.0 | 36% | 57% | 27% | 4.3 |
+| push_fs4_s0 | K5xh8 S1000 I15 rw1.0 | 30% | 50% | 21% | 4.3 |
+| push_fs4_s0 | K8xh4 S2000 I20 rw1.0 | 32% | 57% | 21% | 4.3 |
+| pushv2_ln_s0 | K5xh4 S1000 I15 rw1.0 | 31% | 53% | 21% | 5.5 |
+| pushv2_ln_s0 | K8xh4 S1000 I15 rw1.0 | 29% | 57% | 17% | 5.5 |
+| pushv2_ln_s0 | K5xh8 S1000 I15 rw1.0 | 24% | 47% | 14% | 5.5 |
+| pushv2_ln_s0 | K8xh4 S2000 I20 rw1.0 | 27% | 57% | 14% | 5.5 |
+| push_p512x2_s0 | K5xh4 S300 I10 rw1.0 | 36% | 63% | 24% | 4.7 |
+| push_p512x3_s0 | K5xh4 S300 I10 rw1.0 | 40% | 70% | 27% | 3.9 |
+| push_p1024x2_s0 | K5xh4 S300 I10 rw1.0 | 32% | 63% | 19% | 4.2 |
+| push_p1024x3_s0 | K5xh4 S300 I10 rw1.0 | 39% | 73% | 24% | 4.3 |
+| push_p512x3_s1 | K5xh4 S300 I10 rw1.0 | 40% | 67% | 29% | 4.5 |
+| push_p512x3_s2 | K5xh4 S300 I10 rw1.0 | 36% | 63% | 24% | 3.9 |
+| push_p512x3_r12_s0 | K5xh4 S300 I10 rw1.0 | 25% | 50% | 14% | 6.2 |
+| push_p512x3_fs1_s0 | K5xh4 S300 I10 rw1.0 | 37% | 67% | 24% | 4.4 |
+| push_fs4_s0 | K5xh4 S300 I10 rw0.0 | 40% | 67% | 29% | 4.3 |
+| push_fs4_s0 | K5xh4 S300 I10 rw0.25 | 35% | 63% | 23% | 4.3 |
+| push_fs4_s1 | K5xh4 S300 I10 rw0.0 | 48% | 63% | 41% | 4.0 |
+| push_fs4_s2 | K5xh4 S300 I10 rw0.0 | 41% | 67% | 30% | 4.3 |
+| push_p512x3_s0 | K5xh4 S300 I10 rw0.0 | 47% | 67% | 39% | 3.9 |
+| push_p512x3_s1 | K5xh4 S300 I10 rw0.0 | 48% | 70% | 39% | 4.5 |
+| push_p512x3_s2 | K5xh4 S300 I10 rw0.0 | 52% | 73% | 43% | 3.9 |
 
