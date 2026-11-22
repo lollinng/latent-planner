@@ -21,6 +21,7 @@ live in the browser.
 |---|---|---|
 | **Latent CEM, LeWM-style (λ=0.09), 3 seeds** | **100%** | **100%** |
 | **Latent CEM, frameskip 4 (browser model), 3 seeds** | **100%** | **100%** |
+| Same planner running in the browser (JS + ONNX Runtime Web) | 99% | 98% |
 | Latent CEM without SIGReg (λ=0), 3 seeds | 6% | 1% |
 | Oracle CEM: true simulator, straight-line cost | 87% | 74% |
 | Straight line to goal (true positions) | 70% | 40% |

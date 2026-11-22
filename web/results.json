@@ -37,6 +37,19 @@
    ]
   },
   {
+   "label": "Same planner in the browser (JS + ONNX Runtime Web, frameskip 4, seed 0)",
+   "ours": true,
+   "n_seeds": 1,
+   "success": 0.99,
+   "success_same": 1.0,
+   "success_cross": 0.98,
+   "steps": 9.242424242424242,
+   "sec_per_replan": 0.1722345730771724,
+   "per_seed": [
+    0.99
+   ]
+  },
+  {
    "label": "Latent CEM, no SIGReg (\u03bb=0)",
    "ours": false,
    "n_seeds": 3,

@@ -65,6 +65,13 @@ def main() -> None:
                      "success_cross": mu.success_cross, "success_cross_std": sd.success_cross,
                      "steps": mu.mean_steps_success, "sec_per_replan": mu.sec_per_replan,
                      "per_seed": g.success.round(3).tolist()})
+    g = ev[ev.method == "browser_cem"].tail(1)
+    if not g.empty:
+        r = g.iloc[0]
+        rows.insert(sum(x["ours"] for x in rows), {"label": "Same planner in the browser (JS + ONNX Runtime Web, frameskip 4, seed 0)",
+                     "ours": True, "n_seeds": 1, "success": r.success, "success_same": r.success_same,
+                     "success_cross": r.success_cross, "steps": r.mean_steps_success,
+                     "sec_per_replan": r.sec_per_replan, "per_seed": [round(r.success, 3)]})
     for method, label in BASELINES:
         g = ev[ev.method == method].tail(1)
         if g.empty:

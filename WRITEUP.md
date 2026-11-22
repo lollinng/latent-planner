@@ -64,6 +64,7 @@ CEM, the same CEM with the true simulator and the true straight-line distance as
 |---|---|---|---|---|---|---|
 | Latent CEM, LeWM-style (λ=0.09) | 3 | 100 ± 0% | 100 ± 0% | 100 ± 0% | 10.3 | 1.00, 1.00, 1.00 |
 | Latent CEM, frameskip 4 (λ=0.09) | 3 | 100 ± 0% | 100 ± 0% | 100 ± 0% | 9.4 | 1.00, 1.00, 1.00 |
+| Same planner in the browser (JS + ONNX Runtime Web, frameskip 4, seed 0) | 1 | 99% | 100% | 98% | 9.2 | 0.99 |
 | Latent CEM, no SIGReg (λ=0) | 3 | 6 ± 0% | 10 ± 2% | 1 ± 1% | 16.2 | 0.06, 0.06, 0.05 |
 | Oracle CEM: true simulator, straight-line cost | - | 87% | 100% | 74% | 6.8 | - |
 | Straight line to goal (true positions) | - | 70% | 100% | 40% | 5.6 | - |
@@ -149,7 +150,9 @@ reaches goals with no horizontal overflow.
 - The planner needs the goal within its 20-step horizon (finding 2). Longer tasks would need a longer horizon or
   hierarchical planning.
 - One planning seed per trained model; the spread across seeds is training variance only.
-- The demo uses one model (frameskip 4, seed 0); the evaluation numbers cover all three seeds.
+- The demo uses one model (frameskip 4, seed 0); the evaluation numbers cover all three seeds. Its browser
+  planner (same algorithm, JS random numbers, ONNX Runtime Web, fp16 predictor weights) scores 99% on the test
+  tasks vs 100% in Python; the one miss has its goal in the corner of the doorway.
 
 ## Engineering notes
 
