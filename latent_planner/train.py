@@ -94,14 +94,19 @@ def position_probe(model: WorldModel, train_dir: str, val_dir: str, device: str)
 
     ntr, nva = min(500, data_mod.num_episodes(train_dir)), data_mod.num_episodes(val_dir)
     ztr, zva = embed(train_dir, ntr), embed(val_dir, nva)
-    ptr = np.load(Path(train_dir) / "pos.npy")[:ntr].reshape(-1, 2)
-    pva = np.load(Path(val_dir) / "pos.npy")[:nva].reshape(-1, 2)
+    ptr = np.load(Path(train_dir) / "pos.npy")[:ntr]
+    ptr = ptr.reshape(-1, ptr.shape[-1])  # (x, y) for two-room, (agent x, y, block x, y) for push
+    pva = np.load(Path(val_dir) / "pos.npy")[:nva]
+    pva = pva.reshape(-1, pva.shape[-1])
     reg = Ridge(alpha=1e-3).fit(ztr, ptr)
     pred = reg.predict(zva)
     r2 = 1 - ((pred - pva) ** 2).sum(0) / ((pva - pva.mean(0)) ** 2).sum(0)
     model.train()
-    return {"probe_r2_x": float(r2[0]), "probe_r2_y": float(r2[1]),
-            "probe_rmse_px": float(np.sqrt(((pred - pva) ** 2).sum(1).mean()))}
+    out = {"probe_r2_x": float(r2[0]), "probe_r2_y": float(r2[1]),
+           "probe_rmse_px": float(np.sqrt(((pred[:, :2] - pva[:, :2]) ** 2).sum(1).mean()))}
+    if pva.shape[1] == 4:  # push scene: also how well the block position can be read out
+        out["probe_rmse_block_px"] = float(np.sqrt(((pred[:, 2:] - pva[:, 2:]) ** 2).sum(1).mean()))
+    return out
 
 
 def main() -> None:
