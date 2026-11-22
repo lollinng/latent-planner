@@ -16,3 +16,4 @@ kaggle_jobs/
 results/eval_all.log
 colab_jobs/
 .colab-venv/
+.claude/worktrees/
