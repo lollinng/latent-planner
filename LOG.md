@@ -43,3 +43,16 @@
   oracle CEM 0.87 (1.00 / 0.74).
 - 06:18 fp16 weight storage in the ONNX files (Cast back to fp32, folded at load): model download 5.3 -> 2.9 MB.
   Planning with fp16-rounded weights on the tuning set: 1.00 success either way (10.1 vs 9.9 steps).
+- 06:21-06:32 lam 0 (no SIGReg) x3: collapse in every seed. Embedding std 0.0002-0.0003 (vs ~0.96), pred loss
+  ~2e-7, position probe at chance (20-22 px). Effective rank reads ~31/32 for these collapsed models because it is
+  scale-invariant (tiny isotropic noise); report embedding std as the collapse signal instead.
+- 06:35 Added free Kaggle T4 GPUs as a second place to run jobs. Wrote scripts/kaggle_run.py: private
+  T4 script kernel with the code embedded as a tarball (repo stays private), data regenerated from seed with
+  sha256 printed. Pushed a private kernel: lam {0.01, 0.03, 0.3, 1.0} x 3 seeds + lam 0.09 s0 re-run on T4.
+- 06:38 Research agent on free GPU providers: Colab free via `google-colab-cli` (T4, headless) and Modal ($30/mo
+  credit, card needed) are the next two options; Studio Lab closed to new users, GCP trial can't use GPUs.
+- 06:38 frameskip-4 lam 0.09 s0: tuning set 1.00 (same 1.00 / other 1.00, 9.3 steps). Browser plan time 220 ms
+  (vs 800 ms for frameskip 1), ~0.87 s with 4x CPU throttling as a phone stand-in. 8/8 goals reached in Chrome.
+- 06:40 Export bug: fp16 storage broke the fs4 encoder (0.07 max error; projector BatchNorm running var ~1e-7
+  amplifies upstream rounding) and the failed export had already overwritten web/model. Now atomic (temp dir) and
+  fp16 is kept per graph only if ORT parity < 2e-2: fs4 s0 ships fp32 encoder (4.4 MB) + fp16 rollout (0.2 MB).
