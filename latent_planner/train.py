@@ -198,7 +198,8 @@ def main() -> None:
     torch.cuda.empty_cache()
     summary = {"args": vars(args), "cfg": cfg.to_dict(), **ev, **position_probe(model, args.train, args.val, dev),
                "train_seconds": time.time() - t0, "host_peak_rss_gb": data_mod.peak_rss_gb(),
-               "gpu_peak_mem_gb": torch.cuda.max_memory_allocated() / 1e9 if dev == "cuda" else 0.0}
+               "gpu_peak_mem_gb": torch.cuda.max_memory_allocated() / 1e9 if dev == "cuda" else 0.0,
+               "device": torch.cuda.get_device_name(0) if dev == "cuda" else "cpu", "torch": torch.__version__}
     (out / "summary.json").write_text(json.dumps(summary, indent=2))
     print(json.dumps({k: v for k, v in summary.items() if k not in ("args", "cfg")}, indent=1))
 
