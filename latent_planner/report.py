@@ -158,12 +158,16 @@ def main() -> None:
     push_rows, push_note = [], ""
     if (res / "eval_push.csv").exists():
         ep = pd.read_csv(res / "eval_push.csv")
-        et = ep[(ep.taskset == "test") & (ep.tag == "push")]
+        et = ep[ep.taskset == "test"]
         pm = ["success", "success_short", "success_long", "mean_steps_success"]
-        for prefix, plabel in [("push_fs4_s", "Latent CEM (λ=0.09, frameskip 4), in the demo"),
-                               ("push_ln_fs4_s", "Same, LayerNorm projector"),
-                               ("pushv2_ln_s", "LayerNorm, 2× data (90% pushing), 12k steps")]:
-          g = runs_named(et[et.method == "latent_cem"], prefix).drop_duplicates("run", keep="last")
+        for tag, prefix, plabel in [
+                ("push_rw0", "push_fs4_s", "Latent CEM (λ=0.09, frameskip 4), final-state cost: in the demo"),
+                ("push", "push_fs4_s", "Same model, running cost (the demo until 22 Nov)"),
+                ("push_rw0", "push_p512x3_s", "512×3 predictor, final-state cost"),
+                ("push_dyn", "push_p512x3_s", "512×3 predictor, running cost"),
+                ("push", "push_ln_fs4_s", "LayerNorm projector, running cost"),
+                ("push", "pushv2_ln_s", "LayerNorm, 2× data (90% pushing), 12k steps, running cost")]:
+          g = runs_named(et[(et.method == "latent_cem") & (et.tag == tag)], prefix).drop_duplicates("run", keep="last")
           if not g.empty:
             mu, sd = g[pm].mean(), g[pm].std(ddof=0)
             push_rows.append({"label": plabel, "ours": True, "n_seeds": len(g),
@@ -174,7 +178,7 @@ def main() -> None:
         for method, label in [("scripted", "Hand-written pusher (true positions)"),
                               ("oracle_cem", "Oracle CEM: true simulator, state-distance cost"),
                               ("random", "Random actions")]:
-            b = et[et.method == method].tail(1)
+            b = et[(et.method == method) & (et.tag == "push")].tail(1)
             if not b.empty:
                 r = b.iloc[0]
                 push_rows.append({"label": label, "ours": False, "n_seeds": None, "success": r.success,
@@ -183,7 +187,9 @@ def main() -> None:
         if push_rows:
             push_note = ("100 fixed test tasks; each goal is the end of a 30-step push from the start. Success = block "
                          "within 3 px of its target within 60 steps; long = the block must move 20 px or more. "
-                         "Mean ± std over 3 training seeds.")
+                         "Mean ± std over 3 training seeds. Final-state cost = CEM scores only the last imagined "
+                         "state (running_w 0); the running cost also averages distance along the plan, which "
+                         "penalises the detours long pushes need.")
             md += ["## Scene 2: Push (100 fixed test tasks, 60-step budget, success = block within 3 px)", "",
                    "| Method | Seeds | Success | Short push (< 20 px) | Long push | Steps (successes) | Per-seed |",
                    "|---|---|---|---|---|---|---|"]

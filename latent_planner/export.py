@@ -220,8 +220,10 @@ def main() -> None:
     ap.add_argument("--hold", type=int, default=4)
     ap.add_argument("--scene", choices=["tworoom", "push"], default="tworoom")
     ap.add_argument("--val", type=str, default="data/push_val", help="validation data for the push read-out")
+    ap.add_argument("--running-w", type=float, default=1.0,
+                    help="running-cost weight stored for the browser planner (push demo: 0, final state only)")
     args = ap.parse_args()
-    cem = CEMConfig(knots=args.knots, hold=args.hold, samples=args.samples, iters=args.iters, running_w=1.0)
+    cem = CEMConfig(knots=args.knots, hold=args.hold, samples=args.samples, iters=args.iters, running_w=args.running_w)
     m = export(Path(args.run), Path(args.out), cem, scene=args.scene, val_dir=args.val)
     print(json.dumps({k: m[k] for k in ("run", "parity", "bytes", "frameskip")}, indent=1),
           f"probe grid rmse {m['probe']['grid_rmse_px']:.2f}px, PCA top-2 explained {m['pca_explained_top2']}")

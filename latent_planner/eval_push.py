@@ -138,6 +138,7 @@ def main() -> None:
     ap.add_argument("--iters", type=int, default=10)
     ap.add_argument("--running-w", type=float, default=1.0)
     ap.add_argument("--plan-seed", type=int, default=0)
+    ap.add_argument("--budget", type=int, default=BUDGET, help="env steps per task (the demo allows 120)")
     ap.add_argument("--results", default="results")
     a = ap.parse_args()
     torch.set_num_threads(4)
@@ -172,7 +173,7 @@ def main() -> None:
         model = load_model(Path(run) / "model.pt", dev)
         s = json.loads((Path(run) / "summary.json").read_text())["args"]
         pol = LatentCEM(model, tasks, cem, 1, a.plan_seed, dev, render_batch=P.render_batch)
-        record("latent_cem", run, run_episodes(pol, tasks),
+        record("latent_cem", run, run_episodes(pol, tasks, a.budget),
                {"lam": s["lam"], "seed": s["seed"], "frameskip": s.get("frameskip", 1)})
 
 
