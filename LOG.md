@@ -70,3 +70,7 @@
   goal in the doorway corner (x 33.9, y 45.1); agent ended 8.7 px away. Reported as its own row.
 - 07:02 Owner OK'd a public repo + demo. Before publishing, scrubbed machine/service details and private links from
   the whole (never pushed) git history with git-filter-repo; added MIT LICENSE and the demo/repo links.
+- 07:05 Public repo https://github.com/lollinng/latent-planner created and pushed (scrubbed history; full-history
+  scan clean: personal noreply identity on all commits, no emails, hostnames, IPs, tokens or Kaggle credentials).
+  Pages via Actions; live at https://prathameshjadhav.in/latent-planner/ (no DNS change). Live smoke test in
+  headless Chrome: loads in 3.4-4.5 s, ~180 ms per plan, 4/4 goals, no console errors, no overflow at 390 px.
