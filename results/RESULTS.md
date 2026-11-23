@@ -49,7 +49,8 @@ Rollout error is normalised by the latent variance (1.0 = no better than the mea
 
 | Method | Seeds | Success | Short push (< 20 px) | Long push | Steps (successes) | Per-seed |
 |---|---|---|---|---|---|---|
-| Predictor retrained on 2 rounds of the planner's own attempts, final-state cost: in the demo | 3 | 75 ± 2% | 95 ± 1% | 65 ± 3% | 19.8 | 0.72, 0.77, 0.77 |
+| 1-step prediction loss + predictor dropout 0.1, running cost: in the demo | 3 | 88 ± 1% | 96 ± 1% | 84 ± 2% | 19.4 | 0.87, 0.90, 0.87 |
+| 8-step loss, predictor retrained on 2 rounds of the planner's own attempts, final-state cost | 3 | 75 ± 2% | 95 ± 1% | 65 ± 3% | 19.8 | 0.72, 0.77, 0.77 |
 | Same, 3 rounds | 3 | 77 ± 3% | 96 ± 1% | 66 ± 5% | 20.0 | 0.72, 0.80, 0.78 |
 | Same fine-tuning without new data (control) | 3 | 55 ± 1% | 85 ± 3% | 38 ± 2% | 17.0 | 0.53, 0.55, 0.56 |
 | Starting models (demo recipe retrained on Kaggle), final-state cost | 3 | 51 ± 1% | 79 ± 3% | 36 ± 2% | 16.6 | 0.52, 0.52, 0.49 |
@@ -63,7 +64,22 @@ Rollout error is normalised by the latent variance (1.0 = no better than the mea
 | Oracle CEM: true simulator, state-distance cost | - | 64% | 91% | 49% | 11.1 | - |
 | Random actions | - | 1% | 3% | 0% | 9.0 | - |
 
-100 fixed test tasks; each goal is the end of a 30-step push from the start. Success = block within 3 px of its target within 60 steps; long = the block must move 20 px or more. Mean ± std over 3 training seeds. Final-state cost = CEM scores only the last imagined state (running_w 0); the running cost also averages distance along the plan, which penalises the detours long pushes need.
+100 fixed test tasks; each goal is the end of a 30-step push from the start. Success = block within 3 px of its target within 60 steps; long = the block must move 20 px or more. Mean ± std over 3 training seeds. Final-state cost = CEM scores only the last imagined state (running_w 0); the running cost also averages distance along the plan. With the 8-step prediction loss the running cost hurts (it penalises the detours long pushes need); with 1- or 2-step losses it helps (sweep below).
+
+### Push: prediction-loss rollout length (tuning tasks, mean ± std over seeds, (n) seeds)
+
+| Prediction loss | Final-state cost | Running cost |
+|---|---|---|
+| 8 steps (two-room default) | 43 ± 4% (3) | 31 ± 1% (3) |
+| 8 steps + dropout 0.1 | 32 ± 4% (3) | 26 ± 1% (3) |
+| 4 steps | 63 ± 1% (3) | 45 ± 2% (3) |
+| 4 steps + dropout | 56 ± 3% (3) | 48 ± 2% (3) |
+| 2 steps | 69 ± 2% (3) | 75 ± 2% (3) |
+| 2 steps + dropout | 55 ± 2% (3) | 79 ± 2% (3) |
+| 1 step (teacher forcing only) | 56 ± 2% (3) | 82 ± 3% (3) |
+| 1 step + dropout | 40 ± 2% (3) | 88 ± 1% (3) |
+
+Rollout length = open-loop predictor steps per training window in the prediction loss. Same encoder, predictor size (256×2), data, SIGReg weight and planner (5 knots × 4 steps, 300 samples, 10 iterations).
 
 ### Push variants tried on the tuning tasks (seed 0 unless noted)
 
@@ -125,4 +141,29 @@ Rollout error is normalised by the latent variance (1.0 = no better than the mea
 | kpush_fs4_s0 | K5xh4 S300 I10 rw0.0 | 42% | 63% | 33% | 4.2 |
 | kpush_fs4_s1 | K5xh4 S300 I10 rw0.0 | 51% | 67% | 44% | 4.0 |
 | kpush_fs4_s2 | K5xh4 S300 I10 rw0.0 | 37% | 70% | 23% | 4.2 |
+| push_r1_s0 | K5xh4 S300 I10 rw0.0 | 55% | 47% | 59% | 6.6 |
+| push_r1_s0 | K5xh4 S300 I10 rw1.0 | 79% | 100% | 70% | 6.6 |
+| push_r4_s0 | K5xh4 S300 I10 rw0.0 | 62% | 73% | 57% | 4.1 |
+| push_r4_s0 | K5xh4 S300 I10 rw1.0 | 42% | 57% | 36% | 4.1 |
+| push_r1drop_s0 | K5xh4 S300 I10 rw0.0 | 38% | 33% | 40% | 6.1 |
+| push_r1drop_s0 | K5xh4 S300 I10 rw1.0 | 88% | 93% | 86% | 6.1 |
+| push_r4drop_s0 | K5xh4 S300 I10 rw0.0 | 53% | 63% | 49% | 4.2 |
+| push_r4drop_s0 | K5xh4 S300 I10 rw1.0 | 46% | 63% | 39% | 4.2 |
+| push_r1_s1 | K5xh4 S300 I10 rw0.0 | 58% | 43% | 64% | 7.3 |
+| push_r1_s1 | K5xh4 S300 I10 rw1.0 | 81% | 93% | 76% | 7.3 |
+| push_r4_s1 | K5xh4 S300 I10 rw0.0 | 63% | 77% | 57% | 4.3 |
+| push_r4_s1 | K5xh4 S300 I10 rw1.0 | 47% | 73% | 36% | 4.3 |
+| push_r1drop_s1 | K5xh4 S300 I10 rw0.0 | 39% | 30% | 43% | 6.6 |
+| push_r1drop_s1 | K5xh4 S300 I10 rw1.0 | 86% | 93% | 83% | 6.6 |
+| push_r4drop_s1 | K5xh4 S300 I10 rw0.0 | 60% | 53% | 63% | 4.1 |
+| push_r4drop_s1 | K5xh4 S300 I10 rw1.0 | 51% | 73% | 41% | 4.1 |
+| push_r1_s2 | K5xh4 S300 I10 rw0.0 | 54% | 47% | 57% | 7.0 |
+| push_r1_s2 | K5xh4 S300 I10 rw1.0 | 86% | 100% | 80% | 7.0 |
+| push_r4_s2 | K5xh4 S300 I10 rw0.0 | 64% | 77% | 59% | 3.5 |
+| push_r4_s2 | K5xh4 S300 I10 rw1.0 | 47% | 73% | 36% | 3.5 |
+| push_r1drop_s2 | K5xh4 S300 I10 rw0.0 | 42% | 30% | 47% | 6.2 |
+| push_r1drop_s2 | K5xh4 S300 I10 rw1.0 | 89% | 97% | 86% | 6.2 |
+| push_r4drop_s2 | K5xh4 S300 I10 rw0.0 | 55% | 67% | 50% | 4.1 |
+| push_r4drop_s2 | K5xh4 S300 I10 rw1.0 | 48% | 80% | 34% | 4.1 |
+| push_fs4_s2 | K5xh4 S300 I10 rw1.0 | 29% | 50% | 20% | 4.3 |
 

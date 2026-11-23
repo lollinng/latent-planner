@@ -1,0 +1,186 @@
+[{"stream_name":"stderr","time":1.240191407,"data":"/kaggle/src/script.py:10: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.\n"}
+,{"stream_name":"stderr","time":1.240236917,"data":"  tarfile.open(fileobj=io.BytesIO(base64.b64decode(PAYLOAD)), mode=\"r:gz\").extractall(WORK)\n"}
+,{"stream_name":"stdout","time":11.673884139,"data":"torch 2.11.0+cu130 cuda True Tesla T4\n"}
+,{"stream_name":"stdout","time":11.673920514,"data":"+ python -m latent_planner.data --scene push --episodes 2000 --seed 10 --out data/push_train\n"}
+,{"stream_name":"stdout","time":16.773427403,"data":"  64/2000 episodes, rss 0.08 GB, 5s\n"}
+,{"stream_name":"stdout","time":54.295328918,"data":"  576/2000 episodes, rss 0.08 GB, 42s\n"}
+,{"stream_name":"stdout","time":91.166707249,"data":"  1088/2000 episodes, rss 0.08 GB, 79s\n"}
+,{"stream_name":"stdout","time":128.024408961,"data":"  1600/2000 episodes, rss 0.09 GB, 116s\n"}
+,{"stream_name":"stdout","time":157.48874424,"data":"  2000/2000 episodes, rss 0.09 GB, 146s\n"}
+,{"stream_name":"stdout","time":157.49816383,"data":"wrote data/push_train/: 2000 x 49 frames (1.20 GB on disk), 76% of episodes move the block \u003e 5 px, 146s, peak RSS 0.16 GB\n"}
+,{"stream_name":"stdout","time":157.531584635,"data":"exit 0 after 146s\n"}
+,{"stream_name":"stdout","time":157.53161815,"data":"+ python -m latent_planner.data --scene push --episodes 200 --seed 11 --out data/push_val\n"}
+,{"stream_name":"stdout","time":162.351026069,"data":"  64/200 episodes, rss 0.08 GB, 5s\n"}
+,{"stream_name":"stdout","time":172.244762287,"data":"  200/200 episodes, rss 0.08 GB, 15s\n"}
+,{"stream_name":"stdout","time":172.247040123,"data":"wrote data/push_val/: 200 x 49 frames (0.12 GB on disk), 78% of episodes move the block \u003e 5 px, 14s, peak RSS 0.15 GB\n"}
+,{"stream_name":"stdout","time":172.275873055,"data":"exit 0 after 15s\n"}
+,{"stream_name":"stdout","time":172.279092029,"data":"SHA256 data/push_train/actions.npy 54dc6b658d7d682d\n"}
+,{"stream_name":"stdout","time":175.617285963,"data":"SHA256 data/push_train/frames.npy 39354c5434c15ce7\n"}
+,{"stream_name":"stdout","time":175.622453527,"data":"SHA256 data/push_train/pos.npy b487121f73962aa5\n"}
+,{"stream_name":"stdout","time":175.622821211,"data":"SHA256 data/push_val/actions.npy 8c50e329bf86b2a0\n"}
+,{"stream_name":"stdout","time":175.971107222,"data":"SHA256 data/push_val/frames.npy 5ec98c01ab88282c\n"}
+,{"stream_name":"stdout","time":175.9716438,"data":"SHA256 data/push_val/pos.npy 55a0abeaedb897ad\n"}
+,{"stream_name":"stdout","time":175.971963558,"data":"+ python -m latent_planner.train --out runs/push_r1_s0 --lam 0.09 --seed 0 --frameskip 4 --train data/push_train --val data/push_val --rollout 1 \u003e runs/push_r1_s0/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":555.763144749,"data":"exit 0 after 380s\n"}
+,{"stream_name":"stdout","time":555.763228374,"data":"+ tail -3 runs/push_r1_s0/stdout.txt\n"}
+,{"stream_name":"stdout","time":555.765352099,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":555.765370456,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":555.76537624,"data":"}\n"}
+,{"stream_name":"stdout","time":555.765754531,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":555.765776994,"data":"+ python -m latent_planner.eval_push --runs runs/push_r1_s0 --taskset tune --tag push_reg --running-w 0\n"}
+,{"stream_name":"stdout","time":563.579991175,"data":"latent_cem runs/push_r1_s0          success 0.55 (short 0.47, long 0.59) steps 25.6 final block 8.5px 356 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":564.13806815,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":564.138119688,"data":"+ python -m latent_planner.eval_push --runs runs/push_r1_s0 --taskset tune --tag push_reg --running-w 1\n"}
+,{"stream_name":"stdout","time":571.9780854,"data":"latent_cem runs/push_r1_s0          success 0.79 (short 1.00, long 0.70) steps 17.8 final block 7.4px 360 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":572.498434568,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":572.501999915,"data":"+ python -m latent_planner.train --out runs/push_r4_s0 --lam 0.09 --seed 0 --frameskip 4 --train data/push_train --val data/push_val --rollout 4 \u003e runs/push_r4_s0/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":948.748143278,"data":"exit 0 after 376s\n"}
+,{"stream_name":"stdout","time":948.748202619,"data":"+ tail -3 runs/push_r4_s0/stdout.txt\n"}
+,{"stream_name":"stdout","time":948.750338909,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":948.750365919,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":948.750371512,"data":"}\n"}
+,{"stream_name":"stdout","time":948.750722472,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":948.75074059,"data":"+ python -m latent_planner.eval_push --runs runs/push_r4_s0 --taskset tune --tag push_reg --running-w 0\n"}
+,{"stream_name":"stdout","time":956.564373053,"data":"latent_cem runs/push_r4_s0          success 0.62 (short 0.73, long 0.57) steps 24.3 final block 9.7px 357 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":957.107984346,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":957.108026719,"data":"+ python -m latent_planner.eval_push --runs runs/push_r4_s0 --taskset tune --tag push_reg --running-w 1\n"}
+,{"stream_name":"stdout","time":964.927050003,"data":"latent_cem runs/push_r4_s0          success 0.42 (short 0.57, long 0.36) steps 14.3 final block 19.6px 359 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":965.441892588,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":965.449398541,"data":"+ python -m latent_planner.train --out runs/push_r1drop_s0 --lam 0.09 --seed 0 --frameskip 4 --train data/push_train --val data/push_val --rollout 1 --pred-dropout 0.1 \u003e runs/push_r1drop_s0/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":1333.7088948,"data":"exit 0 after 368s\n"}
+,{"stream_name":"stdout","time":1333.708946187,"data":"+ tail -3 runs/push_r1drop_s0/stdout.txt\n"}
+,{"stream_name":"stdout","time":1333.711239712,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":1333.711265061,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":1333.71126907,"data":"}\n"}
+,{"stream_name":"stdout","time":1333.711615794,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":1333.711632199,"data":"+ python -m latent_planner.eval_push --runs runs/push_r1drop_s0 --taskset tune --tag push_reg --running-w 0\n"}
+,{"stream_name":"stdout","time":1341.456467688,"data":"latent_cem runs/push_r1drop_s0      success 0.38 (short 0.33, long 0.40) steps 28.6 final block 9.7px 352 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":1341.982717967,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":1341.982751085,"data":"+ python -m latent_planner.eval_push --runs runs/push_r1drop_s0 --taskset tune --tag push_reg --running-w 1\n"}
+,{"stream_name":"stdout","time":1349.780937638,"data":"latent_cem runs/push_r1drop_s0      success 0.88 (short 0.93, long 0.86) steps 21.3 final block 5.0px 353 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":1350.325909582,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":1350.335957057,"data":"+ python -m latent_planner.train --out runs/push_r4drop_s0 --lam 0.09 --seed 0 --frameskip 4 --train data/push_train --val data/push_val --rollout 4 --pred-dropout 0.1 \u003e runs/push_r4drop_s0/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":1723.904756585,"data":"exit 0 after 374s\n"}
+,{"stream_name":"stdout","time":1723.904806357,"data":"+ tail -3 runs/push_r4drop_s0/stdout.txt\n"}
+,{"stream_name":"stdout","time":1723.906579252,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":1723.906639191,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":1723.906647421,"data":"}\n"}
+,{"stream_name":"stdout","time":1723.906929571,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":1723.90715936,"data":"+ python -m latent_planner.eval_push --runs runs/push_r4drop_s0 --taskset tune --tag push_reg --running-w 0\n"}
+,{"stream_name":"stdout","time":1731.651179667,"data":"latent_cem runs/push_r4drop_s0      success 0.53 (short 0.63, long 0.49) steps 28.3 final block 10.6px 353 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":1732.196585983,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":1732.196613484,"data":"+ python -m latent_planner.eval_push --runs runs/push_r4drop_s0 --taskset tune --tag push_reg --running-w 1\n"}
+,{"stream_name":"stdout","time":1739.938442842,"data":"latent_cem runs/push_r4drop_s0      success 0.46 (short 0.63, long 0.39) steps 18.2 final block 17.7px 351 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":1740.46675103,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":1740.481448603,"data":"+ python -m latent_planner.train --out runs/push_r1_s1 --lam 0.09 --seed 1 --frameskip 4 --train data/push_train --val data/push_val --rollout 1 \u003e runs/push_r1_s1/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":2110.428157469,"data":"exit 0 after 370s\n"}
+,{"stream_name":"stdout","time":2110.428246389,"data":"+ tail -3 runs/push_r1_s1/stdout.txt\n"}
+,{"stream_name":"stdout","time":2110.430321121,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":2110.430341762,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":2110.430347479,"data":"}\n"}
+,{"stream_name":"stdout","time":2110.430682255,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":2110.43069429,"data":"+ python -m latent_planner.eval_push --runs runs/push_r1_s1 --taskset tune --tag push_reg --running-w 0\n"}
+,{"stream_name":"stdout","time":2118.230400371,"data":"latent_cem runs/push_r1_s1          success 0.58 (short 0.43, long 0.64) steps 26.2 final block 7.6px 357 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":2118.743052565,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":2118.743088647,"data":"+ python -m latent_planner.eval_push --runs runs/push_r1_s1 --taskset tune --tag push_reg --running-w 1\n"}
+,{"stream_name":"stdout","time":2126.489784843,"data":"latent_cem runs/push_r1_s1          success 0.81 (short 0.93, long 0.76) steps 18.7 final block 7.3px 354 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":2126.994322908,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":2127.00956873,"data":"+ python -m latent_planner.train --out runs/push_r4_s1 --lam 0.09 --seed 1 --frameskip 4 --train data/push_train --val data/push_val --rollout 4 \u003e runs/push_r4_s1/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":2499.922311797,"data":"exit 0 after 373s\n"}
+,{"stream_name":"stdout","time":2499.922383713,"data":"+ tail -3 runs/push_r4_s1/stdout.txt\n"}
+,{"stream_name":"stdout","time":2499.924992346,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":2499.925202658,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":2499.925227057,"data":"}\n"}
+,{"stream_name":"stdout","time":2499.925344085,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":2499.925352126,"data":"+ python -m latent_planner.eval_push --runs runs/push_r4_s1 --taskset tune --tag push_reg --running-w 0\n"}
+,{"stream_name":"stdout","time":2507.736626514,"data":"latent_cem runs/push_r4_s1          success 0.63 (short 0.77, long 0.57) steps 22.8 final block 11.8px 357 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":2508.261176314,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":2508.261210168,"data":"+ python -m latent_planner.eval_push --runs runs/push_r4_s1 --taskset tune --tag push_reg --running-w 1\n"}
+,{"stream_name":"stdout","time":2516.029218854,"data":"latent_cem runs/push_r4_s1          success 0.47 (short 0.73, long 0.36) steps 14.2 final block 19.7px 357 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":2516.565465972,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":2516.588242651,"data":"+ python -m latent_planner.train --out runs/push_r1drop_s1 --lam 0.09 --seed 1 --frameskip 4 --train data/push_train --val data/push_val --rollout 1 --pred-dropout 0.1 \u003e runs/push_r1drop_s1/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":2883.211974213,"data":"exit 0 after 367s\n"}
+,{"stream_name":"stdout","time":2883.212020816,"data":"+ tail -3 runs/push_r1drop_s1/stdout.txt\n"}
+,{"stream_name":"stdout","time":2883.214219879,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":2883.214241171,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":2883.214247627,"data":"}\n"}
+,{"stream_name":"stdout","time":2883.214618478,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":2883.214634012,"data":"+ python -m latent_planner.eval_push --runs runs/push_r1drop_s1 --taskset tune --tag push_reg --running-w 0\n"}
+,{"stream_name":"stdout","time":2890.968040577,"data":"latent_cem runs/push_r1drop_s1      success 0.39 (short 0.30, long 0.43) steps 28.5 final block 9.8px 354 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":2891.47181442,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":2891.471856593,"data":"+ python -m latent_planner.eval_push --runs runs/push_r1drop_s1 --taskset tune --tag push_reg --running-w 1\n"}
+,{"stream_name":"stdout","time":2899.200403599,"data":"latent_cem runs/push_r1drop_s1      success 0.86 (short 0.93, long 0.83) steps 19.8 final block 5.0px 352 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":2899.717955493,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":2899.739397824,"data":"+ python -m latent_planner.train --out runs/push_r4drop_s1 --lam 0.09 --seed 1 --frameskip 4 --train data/push_train --val data/push_val --rollout 4 --pred-dropout 0.1 \u003e runs/push_r4drop_s1/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":3276.224060766,"data":"exit 0 after 376s\n"}
+,{"stream_name":"stdout","time":3276.224139622,"data":"+ tail -3 runs/push_r4drop_s1/stdout.txt\n"}
+,{"stream_name":"stdout","time":3276.226364176,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":3276.226383119,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":3276.226388963,"data":"}\n"}
+,{"stream_name":"stdout","time":3276.226835631,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":3276.226851807,"data":"+ python -m latent_planner.eval_push --runs runs/push_r4drop_s1 --taskset tune --tag push_reg --running-w 0\n"}
+,{"stream_name":"stdout","time":3283.901323272,"data":"latent_cem runs/push_r4drop_s1      success 0.60 (short 0.53, long 0.63) steps 26.9 final block 10.3px 351 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":3284.432011577,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":3284.432042655,"data":"+ python -m latent_planner.eval_push --runs runs/push_r4drop_s1 --taskset tune --tag push_reg --running-w 1\n"}
+,{"stream_name":"stdout","time":3292.148882054,"data":"latent_cem runs/push_r4drop_s1      success 0.51 (short 0.73, long 0.41) steps 17.3 final block 17.1px 353 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":3292.679743534,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":3292.7049852,"data":"+ python -m latent_planner.train --out runs/push_r1_s2 --lam 0.09 --seed 2 --frameskip 4 --train data/push_train --val data/push_val --rollout 1 \u003e runs/push_r1_s2/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":3657.541955934,"data":"exit 0 after 365s\n"}
+,{"stream_name":"stdout","time":3657.542016886,"data":"+ tail -3 runs/push_r1_s2/stdout.txt\n"}
+,{"stream_name":"stdout","time":3657.544093152,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":3657.544112715,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":3657.544118284,"data":"}\n"}
+,{"stream_name":"stdout","time":3657.544431202,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":3657.544446274,"data":"+ python -m latent_planner.eval_push --runs runs/push_r1_s2 --taskset tune --tag push_reg --running-w 0\n"}
+,{"stream_name":"stdout","time":3665.38830858,"data":"latent_cem runs/push_r1_s2          success 0.54 (short 0.47, long 0.57) steps 25.2 final block 6.3px 359 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":3665.905418404,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":3665.905454179,"data":"+ python -m latent_planner.eval_push --runs runs/push_r1_s2 --taskset tune --tag push_reg --running-w 1\n"}
+,{"stream_name":"stdout","time":3673.699196347,"data":"latent_cem runs/push_r1_s2          success 0.86 (short 1.00, long 0.80) steps 18.7 final block 7.0px 359 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":3674.237239164,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":3674.265738493,"data":"+ python -m latent_planner.train --out runs/push_r4_s2 --lam 0.09 --seed 2 --frameskip 4 --train data/push_train --val data/push_val --rollout 4 \u003e runs/push_r4_s2/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":4048.597770625,"data":"exit 0 after 374s\n"}
+,{"stream_name":"stdout","time":4048.597823072,"data":"+ tail -3 runs/push_r4_s2/stdout.txt\n"}
+,{"stream_name":"stdout","time":4048.600141143,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":4048.600163826,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":4048.600170668,"data":"}\n"}
+,{"stream_name":"stdout","time":4048.600556145,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":4048.600571745,"data":"+ python -m latent_planner.eval_push --runs runs/push_r4_s2 --taskset tune --tag push_reg --running-w 0\n"}
+,{"stream_name":"stdout","time":4056.536237656,"data":"latent_cem runs/push_r4_s2          success 0.64 (short 0.77, long 0.59) steps 23.8 final block 10.6px 360 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":4057.085201222,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":4057.085236327,"data":"+ python -m latent_planner.eval_push --runs runs/push_r4_s2 --taskset tune --tag push_reg --running-w 1\n"}
+,{"stream_name":"stdout","time":4065.152024786,"data":"latent_cem runs/push_r4_s2          success 0.47 (short 0.73, long 0.36) steps 15.0 final block 20.4px 369 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":4065.752857381,"data":"exit 0 after 9s\n"}
+,{"stream_name":"stdout","time":4065.793189862,"data":"+ python -m latent_planner.train --out runs/push_r1drop_s2 --lam 0.09 --seed 2 --frameskip 4 --train data/push_train --val data/push_val --rollout 1 --pred-dropout 0.1 \u003e runs/push_r1drop_s2/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":4428.837734242,"data":"exit 0 after 363s\n"}
+,{"stream_name":"stdout","time":4428.83778641,"data":"+ tail -3 runs/push_r1drop_s2/stdout.txt\n"}
+,{"stream_name":"stdout","time":4428.839922038,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":4428.839962894,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":4428.839969796,"data":"}\n"}
+,{"stream_name":"stdout","time":4428.840290142,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":4428.840312948,"data":"+ python -m latent_planner.eval_push --runs runs/push_r1drop_s2 --taskset tune --tag push_reg --running-w 0\n"}
+,{"stream_name":"stdout","time":4436.691124264,"data":"latent_cem runs/push_r1drop_s2      success 0.42 (short 0.30, long 0.47) steps 30.6 final block 9.0px 359 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":4437.199123151,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":4437.199159448,"data":"+ python -m latent_planner.eval_push --runs runs/push_r1drop_s2 --taskset tune --tag push_reg --running-w 1\n"}
+,{"stream_name":"stdout","time":4444.933929557,"data":"latent_cem runs/push_r1drop_s2      success 0.89 (short 0.97, long 0.86) steps 20.5 final block 5.0px 354 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":4445.439366109,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":4445.472426503,"data":"+ python -m latent_planner.train --out runs/push_r4drop_s2 --lam 0.09 --seed 2 --frameskip 4 --train data/push_train --val data/push_val --rollout 4 --pred-dropout 0.1 \u003e runs/push_r4drop_s2/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":4818.394987999,"data":"exit 0 after 373s\n"}
+,{"stream_name":"stdout","time":4818.395047843,"data":"+ tail -3 runs/push_r4drop_s2/stdout.txt\n"}
+,{"stream_name":"stdout","time":4818.397185444,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":4818.397204697,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":4818.397209637,"data":"}\n"}
+,{"stream_name":"stdout","time":4818.39755545,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":4818.397572049,"data":"+ python -m latent_planner.eval_push --runs runs/push_r4drop_s2 --taskset tune --tag push_reg --running-w 0\n"}
+,{"stream_name":"stdout","time":4826.173753567,"data":"latent_cem runs/push_r4drop_s2      success 0.55 (short 0.67, long 0.50) steps 26.1 final block 11.7px 356 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":4826.696186373,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":4826.69622188,"data":"+ python -m latent_planner.eval_push --runs runs/push_r4drop_s2 --taskset tune --tag push_reg --running-w 1\n"}
+,{"stream_name":"stdout","time":4834.468337548,"data":"latent_cem runs/push_r4drop_s2      success 0.48 (short 0.80, long 0.34) steps 17.1 final block 19.6px 354 ms/replan [K5xh4 S300 I10 rw1.0]\n"}
+,{"stream_name":"stdout","time":4834.980472139,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":4835.017149956,"data":"ALL_JOBS_DONE\n"}
+,{"stream_name":"stderr","time":4837.944882665,"data":"/usr/local/lib/python3.13/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\\|'\n"}
+,{"stream_name":"stderr","time":4837.944914168,"data":"  cells[i][c] = re.sub('\\\\\\\\\\|', '|', cell)\n"}
+,{"stream_name":"stderr","time":4838.294978167,"data":"/usr/local/lib/python3.13/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\\_'\n"}
+,{"stream_name":"stderr","time":4838.29502098,"data":"  text = re.sub(r'_', '\\_', text) # Escape underscores in display text\n"}
+,{"stream_name":"stderr","time":4839.319614577,"data":"[NbConvertApp] Converting notebook __script__.ipynb to html\n"}
+,{"stream_name":"stderr","time":4840.49315875,"data":"[NbConvertApp] Writing 369082 bytes to __results__.html\n"}
+]

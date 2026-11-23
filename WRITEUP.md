@@ -16,8 +16,9 @@ Everything runs on a 4 GB laptop GPU in about 5 minutes per model, and the plann
 Runtime Web.
 
 A second scene, pushing a block onto a target, is harder: the same recipe gets 39%, rising to 52% with a
-final-state-only planning cost and to 75% (3 seeds; 73% in the browser) after retraining the predictor on the
-planner's own attempts.
+final-state-only planning cost, and to 88% (3 seeds; 84% in the browser) by training the predictor on one-step
+predictions instead of 8-step rollouts, matching a hand-written pusher that uses true positions (87%). Retraining
+the predictor on the planner's own attempts also works (75%).
 
 ## Setup
 
@@ -189,7 +190,7 @@ which roughly halves the browser download, so the demo now runs the LayerNorm mo
 scores 100% on the test tasks with 2.8 MB of model files, against 99% and 5.0 MB for the BatchNorm model it
 replaced.
 
-## Scene 2: Push (stretch goal, mostly works)
+## Scene 2: Push (stretch goal, works)
 
 The second scene is a walled room with an 8×8 px block that the agent pushes. Pushing is kinematic and
 axis-separated: the block moves with the agent and stops at walls, with no momentum or rotation. Like the
@@ -202,15 +203,17 @@ image shows the agent where a pusher would be.
 
 | Method | Seeds | Success | Short push (< 20 px) | Long push | Steps (successes) | Per-seed |
 |---|---|---|---|---|---|---|
-| Predictor retrained on 2 rounds of the planner's own attempts, final-state cost: in the demo | 3 | 75 ± 2% | 95 ± 1% | 65 ± 3% | 19.8 | 0.72, 0.77, 0.77 |
-| Browser planner (JS + ONNX Runtime Web, retrained seed 0, 2 rounds), final-state cost | 1 | 73% | 94% | 62% | 18.8 | 0.73 (Python: 0.72) |
+| 1-step prediction loss + predictor dropout 0.1, running cost: in the demo | 3 | 88 ± 1% | 96 ± 1% | 84 ± 2% | 19.4 | 0.87, 0.90, 0.87 |
+| Browser planner (JS + ONNX Runtime Web, seed 0), running cost | 1 | 84% | 97% | 77% | 19.1 | 0.84 (Python: 0.87) |
+| 8-step loss, predictor retrained on 2 rounds of the planner's own attempts, final-state cost | 3 | 75 ± 2% | 95 ± 1% | 65 ± 3% | 19.8 | 0.72, 0.77, 0.77 |
+| Browser planner (seed 0, 2 rounds), final-state cost | 1 | 73% | 94% | 62% | 18.8 | 0.73 (Python: 0.72) |
 | Same, 3 rounds | 3 | 77 ± 3% | 96 ± 1% | 66 ± 5% | 20.0 | 0.72, 0.80, 0.78 |
 | Same fine-tuning without new data (control) | 3 | 55 ± 1% | 85 ± 3% | 38 ± 2% | 17.0 | 0.53, 0.55, 0.56 |
 | Starting models (demo recipe retrained on Kaggle), final-state cost | 3 | 51 ± 1% | 79 ± 3% | 36 ± 2% | 16.6 | 0.52, 0.52, 0.49 |
 | Latent CEM (λ=0.09, frameskip 4), final-state cost (demo 22-23 Nov) | 3 | 52 ± 1% | 84 ± 4% | 34 ± 1% | 15.4 | 0.50, 0.53, 0.52 |
 | Same model, running cost (the demo until 22 Nov) | 3 | 39 ± 1% | 74 ± 0% | 19 ± 2% | 11.2 | 0.40, 0.37, 0.39 |
-| Browser planner, previous demo model (push_fs4_s0), final-state cost | 1 | 52% | 74% | 40% | 17.0 | 0.52 (Python: 0.50) |
-| Browser planner, previous demo model, running cost | 1 | 37% | 71% | 18% | 10.9 | 0.37 (Python: 0.40) |
+| Browser planner, push_fs4_s0, final-state cost | 1 | 52% | 74% | 40% | 17.0 | 0.52 (Python: 0.50) |
+| Browser planner, push_fs4_s0, running cost | 1 | 37% | 71% | 18% | 10.9 | 0.37 (Python: 0.40) |
 | 512×3 predictor, final-state cost | 3 | 55 ± 3% | 86 ± 4% | 38 ± 5% | 17.2 | 0.54, 0.59, 0.52 |
 | 512×3 predictor, running cost | 3 | 45 ± 3% | 84 ± 5% | 24 ± 3% | 11.4 | 0.47, 0.47, 0.40 |
 | LayerNorm projector, running cost | 3 | 32 ± 3% | 58 ± 11% | 18 ± 2% | 10.7 | 0.35, 0.28, 0.33 |
@@ -219,9 +222,25 @@ image shows the agent where a pusher would be.
 | Oracle CEM: true simulator, state-distance cost | - | 64% | 91% | 49% | 11.1 | - |
 | Random actions | - | 1% | 3% | 0% | 9.0 | - |
 
-100 fixed test tasks; each goal is the end of a 30-step push from the start. Success = block within 3 px of its target within 60 steps; long = the block must move 20 px or more. Mean ± std over 3 training seeds. The retrained
-models are the "Starting models" row after predictor retraining (next sections); those starting models are the
-demo recipe re-trained on the Kaggle T4, so they differ slightly from push_fs4_s0-s2.
+100 fixed test tasks; each goal is the end of a 30-step push from the start. Success = block within 3 px of its target within 60 steps; long = the block must move 20 px or more. Mean ± std over 3 training seeds. Final-state
+cost = CEM scores only the last imagined state; the running cost also averages distance along the plan. The
+retrained models are the "Starting models" row after predictor retraining (next sections); those starting models
+are the demo recipe re-trained on the Kaggle T4, so they differ slightly from push_fs4_s0-s2.
+
+#### Prediction-loss rollout length (tuning tasks, mean ± std over seeds, (n) seeds)
+
+| Prediction loss | Final-state cost | Running cost |
+|---|---|---|
+| 8 steps (two-room default) | 43 ± 4% (3) | 31 ± 1% (3) |
+| 8 steps + dropout 0.1 | 32 ± 4% (3) | 26 ± 1% (3) |
+| 4 steps | 63 ± 1% (3) | 45 ± 2% (3) |
+| 4 steps + dropout | 56 ± 3% (3) | 48 ± 2% (3) |
+| 2 steps | 69 ± 2% (3) | 75 ± 2% (3) |
+| 2 steps + dropout | 55 ± 2% (3) | 79 ± 2% (3) |
+| 1 step (teacher forcing only) | 56 ± 2% (3) | 82 ± 3% (3) |
+| 1 step + dropout | 40 ± 2% (3) | 88 ± 1% (3) |
+
+Rollout length = open-loop predictor steps per training window in the prediction loss. Same encoder, predictor size (256×2), data, SIGReg weight and planner (5 knots × 4 steps, 300 samples, 10 iterations).
 
 #### Variants tried on the tuning tasks (seed 0 unless noted)
 
@@ -291,37 +310,41 @@ Swapping one part at a time for the real thing, on the 100 tuning tasks with the
   long push needs: walking away from the target to get behind the block. Dropping it (running_w 0) lifts the
   test score of the same models from 39% to 52% (long pushes 19% → 34%; 3 seeds) and the 512×3 predictor from 45%
   to 55%; the true-simulator oracle goes from 57% to 70% on the tuning tasks. LeWM, DINO-WM and V-JEPA 2-AC all
-  plan with a final-state cost. The push demo now uses it (same model, no retraining; browser planner 52% on the
-  test tasks); two rooms keeps the running cost.
+  plan with a final-state cost. The push demo used it for a day (same model, browser planner 52% on the test
+  tasks). This holds for models trained with the 8-step loss; with the 1-step loss below, the running cost wins.
 - **Other training changes** (512×3 predictor, seed 0, tuning tasks, running cost): a 12-step rollout loss 25%
   (vs 40% with 8 steps; published JEPA ablations also favour short rollout losses), frameskip 1 37% at 3.6× the
   plan time.
 
-#### What fixed most of it: training the predictor differently
+#### What fixed it: train the predictor on short predictions, or on the planner's own attempts
 
-Both top suggestions from the literature review below worked, each on its own lifting push from about 50% to 70-80%
-with the same encoder size, predictor size, data and planner:
+Both top suggestions from the literature review below worked, each lifting push from about 50% to 75-88% with the
+same encoder size, predictor size, data and planner.
 
+- **Shorten the prediction loss's rollout.** The training loss, copied from two rooms, chains the predictor 8 steps
+  open-loop on each window and penalises every step. With fewer steps (table above), push success on the tuning
+  tasks rises steadily: 31% (8 steps) → 45% (4) → 75% (2) → 82% (1 step, pure teacher forcing) with the running
+  cost, and 88% with 1 step plus predictor dropout 0.1. On the test tasks that model scores **88% ± 1%** (0.87 /
+  0.90 / 0.87; short pushes 96%, long 84%), the same as the hand-written pusher with true positions (87%) and
+  above the oracle CEM with the true simulator (64%). The browser planner scores 84% on the same tasks, and the
+  demo uses this model (seed 0). Dropout alone, with the 8-step loss, hurts (26-32%).
+- **The planning cost interacts with the loss.** With the 8-step loss the final-state cost is better (43% vs 31%),
+  but with 1-step models it is much worse (40% vs 88% with dropout). A plausible reading: a model trained only on
+  one-step predictions drifts over a 5-step imagined rollout, so its last imagined state is the least reliable
+  part of the plan, and the running cost leans on the earlier, more accurate states. A model trained on long
+  open-loop rollouts keeps the end state accurate but, as found in "What did help" above, the running cost then
+  penalises the detour long pushes need. Why the long loss hurts contact at all is not settled; one guess is that
+  it pulls the predictor towards a smooth average over what could happen at contact, which blurs the moment the
+  block starts or stops moving.
 - **Retrain the predictor on the planner's own attempts** (DAgger-style data aggregation,
-  `scripts/push_dagger.py`). Freeze the encoder (its distance is already a good cost), run the planner with the
-  final-state cost on 2,000 fresh random tasks with Gaussian action noise (σ = 0.3), encode the frames of what
-  really happened, and retrain the predictor on the original episodes plus these; repeat. No rewards or positions
-  are used. Test, 3 seeds, final-state cost: 51% → 75% after 2 rounds, 77% after 3; long pushes 36% → 65%. The
-  same fine-tuning without the new data gives 55%, so the gain comes from the planner's data. Most of it arrives
-  in round 1 (tuning tasks: 0.42 / 0.51 / 0.37 → 0.72 / 0.68 / 0.74), and by round 3 the planner reaches the goal in
-  64-69% of its collection episodes (45-49% in round 1). This is the direct fix for model exploitation: the
-  planner's failed plans visit exactly the states and actions the scripted data barely covers, and training on what
-  really happened there removes the errors the planner was exploiting. The demo uses seed 0 after 2 rounds
-  (round picked by mean tuning score; browser planner 73% on the test tasks).
-- **Use a 2-step rollout loss instead of 8.** The training loss, copied from two rooms, also chains the predictor
-  8 steps open-loop on each window. With 2 steps (one teacher-forced step plus one open-loop step), the tuning
-  tasks go from 0.40 / 0.48 / 0.41 to 0.69 / 0.66 / 0.72 with the final-state cost and 0.72 / 0.76 / 0.78 with the
-  running cost (3 seeds; adding predictor dropout 0.1: 0.79 / 0.77 / 0.82 with the running cost, but worse with
-  the final-state cost). The 12-step loss (25%) fits the same trend. Dropout alone, with the 8-step loss, hurts
-  (24-37%). A likely reason: the long open-loop loss pulls the predictor towards a smooth average over what could happen at
-  contact, which is fine for walking in two rooms but blurs the moment the block starts or stops moving.
-
-Combining the two (2-step loss, then retraining with the same loss) is running on the Kaggle T4.
+  `scripts/push_dagger.py`), tried with the 8-step loss. Freeze the encoder, run the planner with the final-state
+  cost on 2,000 fresh random tasks with Gaussian action noise (σ = 0.3), encode the frames of what really
+  happened, and retrain the predictor on the original episodes plus these; repeat. No rewards or positions are
+  used. Test, 3 seeds: 51% → 75% after 2 rounds, 77% after 3; long pushes 36% → 65%. The same fine-tuning without
+  the new data gives 55%, so the gain comes from the planner's data. Most of it arrives in round 1, and by round 3
+  the planner reaches the goal in 64-69% of its collection episodes. This model was the demo for about an hour
+  (browser 73%) before the 1-step model replaced it. Combining retraining with the short loss is running on the
+  Kaggle T4.
 
 A literature review of how others handle pushing (`reports/World models for block pushing.md`) points the same
 way: published PushT results use ~40× our data, one-step or 2-step prediction losses, predictor dropout, and
@@ -357,7 +380,7 @@ distribution of push lengths as the Python test set). Chaining each push from wh
 harder than the test set, because the agent ends every push pressed against the block: 0 of 12 chained tasks were
 reached. With the first push model the demo loop then reached 31 of 64 tasks (48%) with its 120-step limit, and the
 browser planner scored 37% on the 100 test tasks with the test's 60 steps (`tests/web_eval.py --scene push`); the
-current model (retrained predictor, final-state cost) scores 73% there.
+current model (1-step loss + dropout, running cost) scores 84% there.
 
 ## Limitations
 

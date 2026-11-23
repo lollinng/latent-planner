@@ -168,8 +168,10 @@ def main() -> None:
         et = ep[ep.taskset == "test"]
         pm = ["success", "success_short", "success_long", "mean_steps_success"]
         for tag, prefix, suffix, plabel in [
+                ("push_reg", "push_r1drop_s", "",
+                 "1-step prediction loss + predictor dropout 0.1, running cost: in the demo"),
                 ("push_dagger", "kdagger_s", "/round2",
-                 "Predictor retrained on 2 rounds of the planner's own attempts, final-state cost: in the demo"),
+                 "8-step loss, predictor retrained on 2 rounds of the planner's own attempts, final-state cost"),
                 ("push_dagger", "kdagger_s", "/round3", "Same, 3 rounds"),
                 ("push_dagger", "kdagger_s", "/round0", "Same fine-tuning without new data (control)"),
                 ("push_dagger", "kpush_fs4_s", "", "Starting models (demo recipe retrained on Kaggle), final-state cost"),
@@ -201,8 +203,9 @@ def main() -> None:
             push_note = ("100 fixed test tasks; each goal is the end of a 30-step push from the start. Success = block "
                          "within 3 px of its target within 60 steps; long = the block must move 20 px or more. "
                          "Mean ± std over 3 training seeds. Final-state cost = CEM scores only the last imagined "
-                         "state (running_w 0); the running cost also averages distance along the plan, which "
-                         "penalises the detours long pushes need.")
+                         "state (running_w 0); the running cost also averages distance along the plan. With the 8-step "
+                         "prediction loss the running cost hurts (it penalises the detours long pushes need); with "
+                         "1- or 2-step losses it helps (sweep below).")
             md += ["## Scene 2: Push (100 fixed test tasks, 60-step budget, success = block within 3 px)", "",
                    "| Method | Seeds | Success | Short push (< 20 px) | Long push | Steps (successes) | Per-seed |",
                    "|---|---|---|---|---|---|---|"]
@@ -212,7 +215,27 @@ def main() -> None:
                           f"{pct(r['success_long'], r.get('success_long_std'))} | {r['steps']:.1f} | "
                           f"{', '.join(f'{x:.2f}' for x in r.get('per_seed', [])) or '-'} |")
             md += ["", push_note, ""]
-        tv = ep[(ep.taskset == "tune") & (ep.method == "latent_cem")].drop_duplicates(["run", "cem"], keep="last")
+        tu = ep[(ep.taskset == "tune") & (ep.method == "latent_cem")]
+        sweep = [("8 steps (two-room default)", "push_fs4_s", ("push_dev", "push_rw", "push_rw0")),
+                 ("8 steps + dropout 0.1", "push_drop_s", ("push_reg",)), ("4 steps", "push_r4_s", ("push_reg",)),
+                 ("4 steps + dropout", "push_r4drop_s", ("push_reg",)), ("2 steps", "push_r2_s", ("push_reg",)),
+                 ("2 steps + dropout", "push_r2drop_s", ("push_reg",)), ("1 step (teacher forcing only)", "push_r1_s", ("push_reg",)),
+                 ("1 step + dropout", "push_r1drop_s", ("push_reg",))]
+        srows = []
+        for label, prefix, tags in sweep:
+            cells = []
+            for rw in ("rw0.0", "rw1.0"):
+                g = runs_named(tu[tu.tag.isin(tags) & (tu.cem == f"K5xh4 S300 I10 {rw}")], prefix)
+                g = g.drop_duplicates("run", keep="last")
+                cells.append(f"{pct(g.success.mean(), g.success.std(ddof=0))} ({len(g)})" if len(g) else "-")
+            srows.append(f"| {label} | {cells[0]} | {cells[1]} |")
+        if any("(3)" in r for r in srows):
+            md += ["### Push: prediction-loss rollout length (tuning tasks, mean ± std over seeds, (n) seeds)", "",
+                   "| Prediction loss | Final-state cost | Running cost |", "|---|---|---|", *srows,
+                   "", "Rollout length = open-loop predictor steps per training window in the prediction loss. "
+                   "Same encoder, predictor size (256×2), data, SIGReg weight and planner (5 knots × 4 steps, 300 "
+                   "samples, 10 iterations).", ""]
+        tv = tu.drop_duplicates(["run", "cem"], keep="last")
         if not tv.empty:
             md += ["### Push variants tried on the tuning tasks (seed 0 unless noted)", "",
                    "| Run | Planner | Success | Short | Long | Block read-out error (px) |", "|---|---|---|---|---|---|"]

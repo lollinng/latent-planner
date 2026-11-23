@@ -90,16 +90,17 @@ extra long cross-room tasks it goes from 50% to 83% at 4 steps and from 83% to *
 
 - A second scene where the agent pushes a block to a target. Same model, objective and planner, with its own data,
   bit-exact JS port and test set.
-- **Test result (3 seeds): 75% ± 2%** (95% short pushes, 65% long; browser planner 73%), up from 52% by
-  retraining the predictor on the planner's own attempts: freeze the encoder, run the planner on 2,000 fresh
-  random tasks, encode what really happened, retrain the predictor on old plus new episodes, twice. No rewards or
-  positions are used. The same fine-tuning without the new data gives 55%, so the planner's data is what helps.
-  For comparison: a hand-written pusher using true positions gets 87%, the oracle CEM (true simulator) 64%,
-  random actions 1%.
-- **Earlier step, 39% → 52%:** CEM now scores only the final imagined state. The running cost, needed in two rooms,
-  penalised the detour a long push needs (walking away from the target to get behind the block).
-- **Also found:** a 2-step prediction loss instead of the 8-step one used in two rooms lifts tuning-task success
-  from 40-48% to 66-78% (3 seeds) on its own. Combining it with the retraining is running.
+- **Test result (3 seeds): 88% ± 1%** (96% short pushes, 84% long; browser planner 84%), the same as a
+  hand-written pusher using true positions (87%). The fix was in training, not planning: the prediction loss,
+  copied from two rooms, chained the predictor 8 steps open-loop. Training on one-step predictions only, with
+  predictor dropout 0.1, lifts tuning-task success from 31% to 88% with the running cost (sweep over 8/4/2/1 steps,
+  with and without dropout, 3 seeds each, in WRITEUP). For comparison: oracle CEM (true simulator) 64%, random 1%.
+- **Second fix that also works:** retraining the predictor on the planner's own attempts (freeze the encoder, run
+  the planner on 2,000 fresh tasks, encode what really happened, retrain on old plus new episodes, twice) lifts the
+  8-step model from 51% to 75% on test. The same fine-tuning without the new data gives 55%. Combining the two is
+  running.
+- **Earlier step, 39% → 52%:** CEM scoring only the final imagined state, which suits the 8-step models (the
+  running cost penalised the detour a long push needs). With 1-step models the running cost is better.
 - **Where it loses:** with the true simulator and the model's own latent cost, the same planner reaches 86% on the
   tuning tasks, so the embedding is a good cost and the learned contact dynamics are the weak part. More search
   doesn't help the learned model (it does help the true simulator: 57% → 81%), a sign the planner exploits model
@@ -108,7 +109,7 @@ extra long cross-room tasks it goes from 50% to 83% at 4 steps and from 83% to *
 - **How others do it:** a literature review (`reports/World models for block pushing.md`) found published PushT
   results use ~40× our data, short prediction losses, predictor dropout and final-state costs, and that
   retraining the predictor on the planner's own rollouts is the best-supported fix for model exploitation. Both
-  of its top two suggestions worked here (above).
+  of its top two suggestions (short losses with dropout, and retraining on the planner's attempts) worked here.
 - **Why the first models were weaker:** the model's imagined contact dynamics were inaccurate. Prediction error is ~4× the two-room
   model's, and the block position is encoded only to ~4 px. A longer planning horizon didn't help.
   Weaker SIGReg (λ = 0.01) made the model ignore the block: good prediction loss, useless for pushing (17%).

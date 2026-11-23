@@ -181,3 +181,10 @@
   Browser planner (JS + ONNX Runtime Web) on the 100 test tasks: 0.73 (Python 0.72). Same predictor size, so plan
   time is unchanged (0.33 s per replan in headless Chrome). Page note, WRITEUP, REPORT and RESULTS updated;
   report.py can now select retraining rounds (runs/x_s0/round2); export.py accepts retraining summaries.
+- 03:30 Rollout-length sweep (Kaggle lp-push-rollout + lp-push-reg, tuning tasks, 3 seeds each; final-state /
+  running cost): 8 steps 0.43 / 0.31, 4 steps 0.63 / 0.45, 2 steps 0.69 / 0.75, 1 step 0.56 / 0.82, 1 step +
+  dropout 0.1 0.40 / 0.88 (2 + dropout 0.55 / 0.79, 4 + dropout 0.56 / 0.48, 8 + dropout 0.32 / 0.26). Picked
+  1 step + dropout with the running cost on tuning; test: 0.87 / 0.90 / 0.87 (mean 0.88, short 0.96, long 0.84),
+  level with the hand-written pusher (0.87). Browser planner, seed 0: 0.84 on the 100 test tasks (Python 0.87).
+  Push demo switched to it (running_w 1 in meta.json). The cost preference flips with the loss: 8-step models want
+  the final-state cost, 1-step models the running cost. RESULTS gains the sweep table; report.py lists it.
