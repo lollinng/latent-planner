@@ -153,3 +153,11 @@
   quotes the test numbers only. Literature review with 4 research subagents: reports/World models for block
   pushing.md (notes in research_notes/). Top suggestions: retrain the predictor on the planner's own rollouts
   (queued), 2-step rollout loss + predictor dropout 0.1, more contact data, final-state cost (done).
+- 00:35 (23 Nov) 3x contact data (6000 episodes, 90% scripted pushes) + 18k steps, 512x3 predictor, seed 0:
+  tuning 0.45 with the running cost (1x data 512x3 seed 0: 0.40; demo model 0.32). Single seed, modest. Note the
+  data seed (11) equals push_val's seed, so its validation error may be optimistic; tuning/test tasks are separate
+  seeds. Laptop is on battery since the evening (AC offline, GPU capped at 10 W / 210 MHz: 9 s per replan), so the
+  local DAgger queue is stopped and moved to Kaggle (lp-push-dagger): for seeds 0-2, train the demo recipe, then 3
+  rounds of predictor retraining on the planner's own attempts (2000 episodes each, final-state cost, noise 0.3),
+  each round scored on tuning tasks with both costs, then all rounds on test. kaggle_run.py gained raw-command
+  jobs and --include; eval_push names nested run dirs uniquely.

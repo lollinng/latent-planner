@@ -12,6 +12,9 @@ trains on the original data only (the control for fine-tuning without new data).
 
     python scripts/push_dagger.py --run runs/push_fs4_s0 --out runs/push_dagger_s0 --rounds 3
 
+Data is collected with the final-state cost (`--running-w 0`, the demo's planner) by default; every round is
+evaluated on the tuning tasks with both costs.
+
 Writes <out>/round<k>/model.pt (+ summary.json) loadable by eval_push / export, and <out>/log.jsonl.
 """
 from __future__ import annotations
@@ -147,6 +150,9 @@ def main() -> None:
     ap.add_argument("--lr", type=float, default=3e-4)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--eval-n", type=int, default=100)
+    ap.add_argument("--running-w", type=float, default=0.0,
+                    help="planner cost used to collect data (0 = final-state cost, as in the demo); "
+                         "every round is evaluated with both 0 and 1")
     a = ap.parse_args()
     dev = "cuda"
     torch.manual_seed(a.seed)
@@ -156,7 +162,8 @@ def main() -> None:
     for p in model.encoder.parameters():
         p.requires_grad_(False)
     fs = model.cfg.frameskip
-    cfg = CEMConfig(knots=5, hold=4, samples=300, iters=10, running_w=1.0)
+    cfg = CEMConfig(knots=5, hold=4, samples=300, iters=10, running_w=a.running_w)
+    cfgs = {rw: CEMConfig(knots=5, hold=4, samples=300, iters=10, running_w=rw) for rw in (0.0, 1.0)}
     render = TorchRender(dev)
     datasets = [encode_dataset(model, ROOT / a.train, dev)]
     Zv, Av = encode_dataset(model, ROOT / a.val, dev)
@@ -164,14 +171,17 @@ def main() -> None:
     tune = {k: (v[: a.eval_n] if isinstance(v, list) else v) for k, v in tune.items()}
     base = json.loads((ROOT / a.run / "summary.json").read_text())["args"]
 
-    def evaluate(tag):
-        pol = LatentCEM(model, tune, cfg, 1, 0, dev, render_batch=P.render_batch)
-        return EPU.run_episodes(pol, tune)
+    def evaluate():
+        """Tuning-task success with the final-state cost (rw0) and the running cost (rw1)."""
+        res = {}
+        for rw, c in cfgs.items():
+            r = EPU.run_episodes(LatentCEM(model, tune, c, 1, 0, dev, render_batch=P.render_batch), tune)
+            k = f"rw{rw:g}"
+            res.update({f"tune_{k}": r["success"], f"short_{k}": r["success_short"], f"long_{k}": r["success_long"]})
+        return res
 
     log = open(out / "log.jsonl", "a")
-    r0 = evaluate("start")
-    row = {"round": "start", "tune": r0["success"], "short": r0["success_short"], "long": r0["success_long"],
-           "val_nmse": val_rollout_nmse(model.predictor, Zv, Av, fs)}
+    row = {"round": "start", **evaluate(), "val_nmse": val_rollout_nmse(model.predictor, Zv, Av, fs)}
     print(json.dumps(row), flush=True)
     log.write(json.dumps(row) + "\n")
     for k in range(a.rounds + 1):
@@ -182,10 +192,9 @@ def main() -> None:
             datasets.append((Z, A))
             info = {"collected": a.collect, "collect_reached": hit}
         loss = train_predictor(model.predictor, datasets, fs, a.train_steps, 8, 8, a.lr, a.seed * 100 + k, dev)
-        r = evaluate(f"round{k}")
         row = {"round": k, **info, "episodes": sum(z.shape[0] for z, _ in datasets), "train_loss": loss,
-               "val_nmse": val_rollout_nmse(model.predictor, Zv, Av, fs), "tune": r["success"],
-               "short": r["success_short"], "long": r["success_long"], "minutes": round((time.time() - t0) / 60, 1)}
+               "val_nmse": val_rollout_nmse(model.predictor, Zv, Av, fs), **evaluate(),
+               "minutes": round((time.time() - t0) / 60, 1)}
         print(json.dumps(row), flush=True)
         log.write(json.dumps(row) + "\n")
         log.flush()

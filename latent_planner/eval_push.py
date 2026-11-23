@@ -160,7 +160,9 @@ def main() -> None:
             if new:
                 w.writeheader()
             w.writerow(row)
-        (out_dir / f"{a.taskset}__{method}__{Path(run).name or 'none'}.json").write_text(json.dumps(row))
+        parts = Path(run).parts if run else ()
+        name = "_".join(parts[1:]) if len(parts) > 1 and parts[0] == "runs" else (Path(run).name or "none")
+        (out_dir / f"{a.taskset}__{method}__{name}.json").write_text(json.dumps(row))  # runs/a/b -> a_b
         print(f"{method:10s} {run:24s} success {r['success']:.2f} (short {r['success_short']:.2f}, long "
               f"{r['success_long']:.2f}) steps {r['mean_steps_success']:.1f} final block {r['final_block_dist_px']:.1f}px "
               f"{r['sec_per_replan'] * 1000:.0f} ms/replan [{cem_str}]", flush=True)

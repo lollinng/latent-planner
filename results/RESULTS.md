@@ -99,4 +99,5 @@ Rollout error is normalised by the latent variance (1.0 = no better than the mea
 | push_p512x3_s0 | K5xh4 S300 I10 rw0.0 | 47% | 67% | 39% | 3.9 |
 | push_p512x3_s1 | K5xh4 S300 I10 rw0.0 | 48% | 70% | 39% | 4.5 |
 | push_p512x3_s2 | K5xh4 S300 I10 rw0.0 | 52% | 73% | 43% | 3.9 |
+| push3_p512x3_18k_s0 | K5xh4 S300 I10 rw1.0 | 45% | 73% | 33% | 3.6 |
 

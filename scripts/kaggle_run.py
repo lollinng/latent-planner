@@ -81,9 +81,11 @@ def save_outputs():
 
 for name, args in JOBS:
     os.makedirs(f"runs/{name}", exist_ok=True)
-    sh(f"python -m latent_planner.train --out runs/{name} {args} > runs/{name}/stdout.txt 2>&1")
+    raw = args.startswith("!")  # "!<shell command>": run as is, no per-job evals
+    cmd = args[1:] if raw else f"python -m latent_planner.train --out runs/{name} {args}"
+    sh(f"{cmd} > runs/{name}/stdout.txt 2>&1")
     sh(f"tail -3 runs/{name}/stdout.txt")
-    for c in EVAL_CMDS:
+    for c in ([] if raw else EVAL_CMDS):
         sh(c.format(name=name, tag=TAG))
     save_outputs()  # after every job, so a timeout still leaves results
 print("ALL_JOBS_DONE", flush=True)
@@ -105,11 +107,13 @@ def username() -> str:
     sys.exit("could not determine the Kaggle username")
 
 
-def payload() -> str:
+def payload(include: list[str] = ()) -> str:
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode="w:gz") as tar:
         for p in sorted((ROOT / "latent_planner").glob("*.py")):
             tar.add(p, arcname=f"latent_planner/{p.name}")
+        for rel in include:  # extra repo files, e.g. scripts/push_dagger.py
+            tar.add(ROOT / rel, arcname=rel)
         for name in ["tasks_test.json", "tasks_tune.json", "push_tasks_test.json", "push_tasks_tune.json"]:
             if (ROOT / "results" / name).exists():
                 tar.add(ROOT / "results" / name, arcname=f"results/{name}")
@@ -126,12 +130,12 @@ PUSH_EVAL_TUNE = ["python -m latent_planner.eval_push --runs runs/{name} --tasks
 
 
 def push(slug: str, jobs: list[tuple[str, str]], tag: str, scene: str = "tworoom",
-         data_cmds: list[str] | None = None, eval_cmds: list[str] | None = None) -> None:
+         data_cmds: list[str] | None = None, eval_cmds: list[str] | None = None, include: list[str] = ()) -> None:
     wd = JOBS_DIR / slug
     wd.mkdir(parents=True, exist_ok=True)
     d0, e0 = (PUSH_DATA, PUSH_EVAL_TUNE) if scene == "push" else (TWOROOM_DATA, TWOROOM_EVAL)
     data_cmds, eval_cmds = data_cmds or d0, eval_cmds or e0
-    src = (KERNEL_TEMPLATE.replace("__PAYLOAD__", payload()).replace("__JOBS__", repr(jobs))
+    src = (KERNEL_TEMPLATE.replace("__PAYLOAD__", payload(include)).replace("__JOBS__", repr(jobs))
            .replace("__TAG__", tag).replace("__DATA_CMDS__", repr(data_cmds)).replace("__EVAL_CMDS__", repr(eval_cmds)))
     (wd / "script.py").write_text(src)
     (wd / "jobs.json").write_text(json.dumps({"jobs": jobs, "tag": tag, "pushed": time.strftime("%F %T")}, indent=1))
@@ -203,13 +207,14 @@ def main() -> None:
     ap.add_argument("--data-cmd", action="append", default=None, help="override the data commands (repeatable)")
     ap.add_argument("--eval-cmd", action="append", default=None,
                     help="override the per-job eval commands; {name} and {tag} are filled in (repeatable)")
+    ap.add_argument("--include", nargs="*", default=[], help="extra repo files to ship, e.g. scripts/push_dagger.py")
     ap.add_argument("--poll", type=int, default=60)
     ap.add_argument("--timeout", type=int, default=6 * 3600)
     a = ap.parse_args()
     if a.action == "push":
         jobs = [tuple(j.split("=", 1)) for j in a.jobs]
         assert jobs, "no jobs"
-        push(a.slug, jobs, a.tag, a.scene, a.data_cmd, a.eval_cmd)
+        push(a.slug, jobs, a.tag, a.scene, a.data_cmd, a.eval_cmd, a.include)
     elif a.action == "wait":
         print(wait(a.slug, a.poll, a.timeout))
     else:
