@@ -28,6 +28,7 @@ class ModelConfig:
     pred_layers: int = 2
     frameskip: int = 1  # env steps per predictor step; the predictor sees the k-step action chunk (2k values)
     proj_norm: str = "bn"  # projector normalisation: "bn" (LeWM's BatchNorm) or "ln" (LayerNorm, per sample)
+    pred_dropout: float = 0.0  # dropout after each predictor hidden layer (training only; 0 = none, as in LeWM)
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -73,6 +74,8 @@ class Predictor(nn.Module):
         layers, d_in = [], cfg.latent_dim + cfg.act_emb
         for _ in range(cfg.pred_layers):
             layers += [nn.Linear(d_in, cfg.pred_hidden), nn.LayerNorm(cfg.pred_hidden), nn.GELU()]
+            if cfg.pred_dropout > 0:  # only added when used, so older checkpoints keep their layer indices
+                layers.append(nn.Dropout(cfg.pred_dropout))
             d_in = cfg.pred_hidden
         layers.append(nn.Linear(d_in, cfg.latent_dim))
         self.net = nn.Sequential(*layers)
