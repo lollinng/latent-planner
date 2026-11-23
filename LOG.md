@@ -161,3 +161,10 @@
   rounds of predictor retraining on the planner's own attempts (2000 episodes each, final-state cost, noise 0.3),
   each round scored on tuning tasks with both costs, then all rounds on test. kaggle_run.py gained raw-command
   jobs and --include; eval_push names nested run dirs uniquely.
+- 01:50 Prediction-loss rollout length matters a lot for push (Kaggle lp-push-reg, tuning tasks, 3 seeds, demo
+  recipe otherwise). 2-step rollout loss (vs 8): final-state cost 0.69 / 0.66 / 0.72, running cost 0.72 / 0.76 /
+  0.78 (8-step: 0.40 / 0.48 / 0.41 and about 0.32). With predictor dropout 0.1 on top: 0.57 / 0.53 / 0.54 and
+  0.79 / 0.77 / 0.82. Dropout alone (8-step) hurts: 0.24-0.37. Long pushes go from about 0.20-0.35 to 0.57-0.79.
+  Consistent with the 12-step loss being worse (0.25). Kaggle data hashes equal the local data; push_r2_s0
+  re-scored locally gives 0.71 vs 0.72 (GPU numerics). Same predictor size, so same browser speed. Queued on
+  Kaggle before any test-set run: rollout 1 and 4, each with and without dropout, 3 seeds (lp-push-rollout).
