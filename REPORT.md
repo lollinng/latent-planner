@@ -101,6 +101,14 @@ extra long cross-room tasks it goes from 50% to 83% at 4 steps and from 83% to *
      the planner's data was what helped (51% → 75%, control 55%).
 - Run-to-run noise is about 3-4 points (the same recipe trained twice: 88% and 84%). For comparison: oracle CEM
   (true simulator) 64%, random actions 1%.
+- **Test-set caveat, checked:** 94 of the 100 test goals have the block against a wall (30 in a corner), because
+  the scripted push that makes them nearly always ends there. On 100 extra tasks with the goal in the open, the demo
+  recipe scores 92% ± 1% (hand-written pusher 100%, true-simulator CEM 94%).
+- **Half the remaining failures are dead ends.** The agent can only push, so a block within 6 px of a wall can never
+  come away from it. 15 of the 28 test failures (3 seeds) shove the block against the wrong wall early on (median
+  step ~11 of 60) and can't be recovered; the rest are near misses (~8 px). The hand-written pusher and
+  true-simulator CEM never do this. The latent cost is symmetric, so it can't tell a one-way move from a reversible
+  one.
 - **Earlier step, 39% → 52%:** CEM scoring only the final imagined state, which suits the 8-step models (the
   running cost penalised the detour a long push needs). With 1-step models the running cost is better.
 - **Where it loses:** with the true simulator and the model's own latent cost, the same planner reaches 86% on the

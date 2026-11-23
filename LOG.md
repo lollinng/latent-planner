@@ -201,3 +201,10 @@
   dropout round 1: 0.923; 2-step round 1: 0.907), seed 0 fixed in advance. Browser planner on the 100 test tasks:
   0.90 (Python 0.91). Push demo switched to it. Caveats in WRITEUP: for 1-step models most of the retraining gain is
   the extra training (control 0.91), and the same recipe re-run on the same hardware moved 0.88 -> 0.84.
+- 05:45 Push failure analysis (owner's question: can the block get stuck?). Yes: push-only, so a block within 6 px
+  of a wall can never come away from it. `scripts/push_deadends.py` on the saved test trajectories: 15 of 28 demo
+  recipe failures (3 seeds) are such dead ends, mostly the block shoved against the wrong wall around step 11; the
+  rest are near misses (~8 px). Hand-written pusher and true-simulator CEM: 0 dead ends. Also found: 94/100 test
+  goals have the block against a wall (30 in a corner). New `--taskset interior` (seed 5050, 100 goals in the open,
+  12-step pushes): demo recipe 0.91 / 0.91 / 0.93, hand-written pusher 1.00, oracle CEM 0.94, random 0.00. Ran
+  locally on battery (6 min). WRITEUP and REPORT updated.

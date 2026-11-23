@@ -29,12 +29,33 @@ BUDGET = 60
 LONG_PX = 20.0
 
 
-def load_tasks(path: Path, n: int, seed: int) -> dict:
+INNER_LO = P.BORDER + 2 * P.AGENT_R + P.BLOCK_H  # block centre in [12, 52]: pushable from all four sides
+INNER_HI = P.SIZE - P.BORDER - 2 * P.AGENT_R - P.BLOCK_H
+
+
+def make_interior_tasks(n: int, seed: int, steps: int = 12, min_move: float = 6.0) -> dict:
+    """Like env_push.make_tasks, but every goal leaves the block in the open (not against a wall), so the agent has
+    to stop the block itself. 94 of the 100 standard test goals have the block touching a wall, because the 30-step
+    pusher that makes them almost always runs into one. Shorter pushes, filtered: still reachable by construction."""
+    rng = np.random.default_rng(seed)
+    starts, goals, moved = [], [], []
+    while len(starts) < n:
+        S, _ = P.rollout(rng, steps, "push")
+        d = float(np.linalg.norm(S[-1, 2:] - S[0, 2:]))
+        g = S[-1, 2:]
+        if d >= min_move and (g >= INNER_LO).all() and (g <= INNER_HI).all():
+            starts.append(S[0])
+            goals.append(S[-1])
+            moved.append(d)
+    return {"seed": seed, "starts": np.array(starts).tolist(), "goals": np.array(goals).tolist(), "moved": moved}
+
+
+def load_tasks(path: Path, n: int, seed: int, interior: bool = False) -> dict:
     if path.exists():
         t = json.loads(path.read_text())
         assert t["seed"] == seed and len(t["starts"]) == n, f"{path} has different tasks"
         return t
-    t = P.make_tasks(n, seed)
+    t = make_interior_tasks(n, seed) if interior else P.make_tasks(n, seed)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(t))
     return t
@@ -129,7 +150,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--runs", nargs="*", default=[])
     ap.add_argument("--baselines", action="store_true")
-    ap.add_argument("--taskset", choices=["test", "tune"], default="test")
+    ap.add_argument("--taskset", choices=["test", "tune", "interior"], default="test")
     ap.add_argument("--n", type=int, default=100)
     ap.add_argument("--tag", default="push")
     ap.add_argument("--knots", type=int, default=5)
@@ -144,8 +165,8 @@ def main() -> None:
     torch.set_num_threads(4)
     dev = "cuda" if torch.cuda.is_available() else "cpu"
     res = Path(a.results)
-    seed = {"test": 3030, "tune": 4040}[a.taskset]
-    tasks = load_tasks(res / f"push_tasks_{a.taskset}.json", a.n, seed)
+    seed = {"test": 3030, "tune": 4040, "interior": 5050}[a.taskset]
+    tasks = load_tasks(res / f"push_tasks_{a.taskset}.json", a.n, seed, interior=a.taskset == "interior")
     cem = CEMConfig(knots=a.knots, hold=a.hold, samples=a.samples, iters=a.iters, running_w=a.running_w)
     cem_str = f"K{cem.knots}xh{cem.hold} S{cem.samples} I{cem.iters} rw{cem.running_w}"
     out_dir = res / "eval" / a.tag

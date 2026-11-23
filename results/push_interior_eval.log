@@ -1,0 +1,10 @@
+random                              success 0.00 (short 0.00, long 0.00) steps nan final block 13.2px 0 ms/replan [K5xh4 S300 I10 rw1.0]
+scripted                            success 1.00 (short 1.00, long 1.00) steps 14.3 final block 1.6px 3 ms/replan [K5xh4 S300 I10 rw1.0]
+oracle_cem                          success 0.94 (short 0.95, long 0.86) steps 10.2 final block 2.3px 15397 ms/replan [K5xh4 S300 I10 rw1.0]
+latent_cem runs/kdagger_r1drop_s0/round1 success 0.91 (short 0.90, long 1.00) steps 13.9 final block 2.7px 3065 ms/replan [K5xh4 S300 I10 rw1.0]
+latent_cem runs/kdagger_r1drop_s1/round1 success 0.91 (short 0.91, long 0.93) steps 13.5 final block 2.5px 3030 ms/replan [K5xh4 S300 I10 rw1.0]
+latent_cem runs/kdagger_r1drop_s2/round1 success 0.93 (short 0.93, long 0.93) steps 14.0 final block 2.9px 3028 ms/replan [K5xh4 S300 I10 rw1.0]
+
+real	6m18.512s
+user	6m12.653s
+sys	0m3.612s

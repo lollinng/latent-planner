@@ -234,6 +234,25 @@ cost = CEM scores only the last imagined state; the running cost also averages d
 retrained models are the "Starting models" row after predictor retraining (next sections); those starting models
 are the demo recipe re-trained on the Kaggle T4, so they differ slightly from push_fs4_s0-s2.
 
+#### Goals away from the walls (found late)
+
+94 of the 100 test goals have the block touching a wall, 30 of them in a corner: the 30-step scripted push that
+makes each goal almost always runs the block into a wall. So the test mostly asks for the block at the right place
+along a wall, and the wall does part of the stopping. To check that the result isn't an artefact of that, a second
+set of 100 tasks (`--taskset interior`, seed 5050, never used for any choice) keeps only goals with the block in the
+open (centre 12-52 px, where it can be pushed from all four sides). Its goals come from shorter 12-step pushes
+(median block move 13 px; 14 long pushes).
+
+| Method | Success | Short | Long |
+|---|---|---|---|
+| Demo recipe (1-step loss + dropout, 1 round of retraining, running cost), 3 seeds | 92 ± 1% (0.91, 0.91, 0.93) | 91% | 95% |
+| Hand-written pusher (true positions) | 100% | 100% | 100% |
+| Oracle CEM: true simulator, state-distance cost | 94% | 95% | 86% |
+| Random actions | 0% | 0% | 0% |
+
+The learned planner stops the block in the open as well as it does against a wall. These pushes are shorter, so
+the hand-written pusher gets all of them. 10 of the planner's 25 failures here are dead ends (next section).
+
 #### Prediction-loss rollout length (tuning tasks, mean ± std over seeds, (n) seeds)
 
 | Prediction loss | Final-state cost | Running cost |
@@ -357,6 +376,25 @@ true positions (87%).
 - **Run-to-run noise is about 3-4 points.** The 1-step + dropout recipe trained twice on the same T4 type with the
   same seeds scored 0.87 / 0.90 / 0.87 and 0.84 / 0.85 / 0.84 on test (GPU kernels are not deterministic), so
   differences of that size between recipes are not meaningful.
+
+#### Remaining failures: half are dead ends
+
+The agent can only push. To move the block away from a wall it has to stand between block and wall, which needs a
+6 px gap, so once the block centre is within 6 px of a wall (x or y below 12 or above 52) it can never come away
+from that wall, and in a corner it is stuck for good. When the goal lies the other way by more than the 3 px success
+radius, the task can no longer be solved. `scripts/push_deadends.py` checks the saved test trajectories for this
+(a sufficient condition, so it undercounts; it never flags a task that later succeeded).
+
+- Demo recipe, 3 seeds: 28 of 300 test episodes fail. **15 of them are dead ends** (2, 7 and 6 per seed), almost
+  all from shoving the block against a wall the goal isn't on (14; 1 into a corner), at a median step of ~11 of 60,
+  while the block is still ~40 px from its goal. The other 13 are near misses that end a median 7.7 px away.
+- On the open-room goals above it is 10 of 25 failures (2, 4 and 4 per seed).
+- The hand-written pusher and the true-simulator planner never cause a dead end. With the first push models about
+  40% of failures were dead ends (23-27 of ~61 per seed).
+- The planner can't see this coming. Its cost is a plain distance between embeddings, which is symmetric: it has no
+  notion that a move can be one-way. A cost that measures "how many steps from here to the goal" (which can differ
+  from goal to here) would rank a pinned block as far away; learning such an asymmetric distance is one direction
+  for future work.
 
 A literature review of how others handle pushing (`reports/World models for block pushing.md`) points the same
 way: published PushT results use ~40× our data, one-step or 2-step prediction losses, predictor dropout, and
