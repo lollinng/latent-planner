@@ -168,3 +168,10 @@
   Consistent with the 12-step loss being worse (0.25). Kaggle data hashes equal the local data; push_r2_s0
   re-scored locally gives 0.71 vs 0.72 (GPU numerics). Same predictor size, so same browser speed. Queued on
   Kaggle before any test-set run: rollout 1 and 4, each with and without dropout, 3 seeds (lp-push-rollout).
+- 01:55 Retraining the predictor on the planner's own attempts works (Kaggle lp-push-dagger; encoder frozen,
+  2000 planner episodes per round with the final-state cost and action noise 0.3, predictor trained with the
+  usual 8-step loss). Fresh demo-recipe models, tuning, final-state cost: 0.42 / 0.51 / 0.37 -> round 1 0.72 / 0.68
+  / 0.74 -> round 3 0.71 / 0.73 / 0.66. Round 0 (same fine-tuning, no new data) 0.52 / 0.51 / 0.42, so the new data
+  is what helps. Test, final-state cost: base 0.52 / 0.52 / 0.49, round 3 0.72 / 0.80 / 0.78 (long 0.60-0.71 vs
+  0.34-0.38). The planner reaches the goal in 45-49% of collection episodes in round 1 and 64-69% by round 3.
+  Per-round logs in results/push_dagger/. Next: DAgger on top of the short-rollout loss.

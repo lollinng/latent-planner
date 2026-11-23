@@ -148,6 +148,7 @@ def main() -> None:
     ap.add_argument("--noise", type=float, default=0.3)
     ap.add_argument("--train-steps", type=int, default=6000)
     ap.add_argument("--lr", type=float, default=3e-4)
+    ap.add_argument("--rollout", type=int, default=8, help="open-loop steps in the prediction loss (8 = training default)")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--eval-n", type=int, default=100)
     ap.add_argument("--running-w", type=float, default=0.0,
@@ -191,7 +192,7 @@ def main() -> None:
             Z, A, hit = collect(model, a.collect, 10_000 + 100 * a.seed + k, a.noise, cfg, dev, render)
             datasets.append((Z, A))
             info = {"collected": a.collect, "collect_reached": hit}
-        loss = train_predictor(model.predictor, datasets, fs, a.train_steps, 8, 8, a.lr, a.seed * 100 + k, dev)
+        loss = train_predictor(model.predictor, datasets, fs, a.train_steps, 8, a.rollout, a.lr, a.seed * 100 + k, dev)
         row = {"round": k, **info, "episodes": sum(z.shape[0] for z, _ in datasets), "train_loss": loss,
                "val_nmse": val_rollout_nmse(model.predictor, Zv, Av, fs), **evaluate(),
                "minutes": round((time.time() - t0) / 60, 1)}

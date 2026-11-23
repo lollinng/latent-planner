@@ -1,0 +1,81 @@
+[{"stream_name":"stderr","time":1.185822389,"data":"/kaggle/src/script.py:10: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.\n"}
+,{"stream_name":"stderr","time":1.185858587,"data":"  tarfile.open(fileobj=io.BytesIO(base64.b64decode(PAYLOAD)), mode=\"r:gz\").extractall(WORK)\n"}
+,{"stream_name":"stdout","time":9.363641485,"data":"torch 2.11.0+cu130 cuda True Tesla T4\n"}
+,{"stream_name":"stdout","time":9.363673468,"data":"+ python -m latent_planner.data --scene push --episodes 2000 --seed 10 --out data/push_train\n"}
+,{"stream_name":"stdout","time":14.454538181,"data":"  64/2000 episodes, rss 0.08 GB, 5s\n"}
+,{"stream_name":"stdout","time":52.214906765,"data":"  576/2000 episodes, rss 0.08 GB, 43s\n"}
+,{"stream_name":"stdout","time":89.905013199,"data":"  1088/2000 episodes, rss 0.08 GB, 80s\n"}
+,{"stream_name":"stdout","time":127.524926531,"data":"  1600/2000 episodes, rss 0.09 GB, 118s\n"}
+,{"stream_name":"stdout","time":157.154997252,"data":"  2000/2000 episodes, rss 0.09 GB, 148s\n"}
+,{"stream_name":"stdout","time":157.163231785,"data":"wrote data/push_train/: 2000 x 49 frames (1.20 GB on disk), 76% of episodes move the block \u003e 5 px, 148s, peak RSS 0.16 GB\n"}
+,{"stream_name":"stdout","time":157.196767303,"data":"exit 0 after 148s\n"}
+,{"stream_name":"stdout","time":157.196792564,"data":"+ python -m latent_planner.data --scene push --episodes 200 --seed 11 --out data/push_val\n"}
+,{"stream_name":"stdout","time":162.175078755,"data":"  64/200 episodes, rss 0.08 GB, 5s\n"}
+,{"stream_name":"stdout","time":172.148467869,"data":"  200/200 episodes, rss 0.08 GB, 15s\n"}
+,{"stream_name":"stdout","time":172.150663733,"data":"wrote data/push_val/: 200 x 49 frames (0.12 GB on disk), 78% of episodes move the block \u003e 5 px, 15s, peak RSS 0.15 GB\n"}
+,{"stream_name":"stdout","time":172.18063623,"data":"exit 0 after 15s\n"}
+,{"stream_name":"stdout","time":172.184199165,"data":"SHA256 data/push_train/actions.npy 54dc6b658d7d682d\n"}
+,{"stream_name":"stdout","time":175.732852403,"data":"SHA256 data/push_train/frames.npy 39354c5434c15ce7\n"}
+,{"stream_name":"stdout","time":175.73781438,"data":"SHA256 data/push_train/pos.npy b487121f73962aa5\n"}
+,{"stream_name":"stdout","time":175.738185483,"data":"SHA256 data/push_val/actions.npy 8c50e329bf86b2a0\n"}
+,{"stream_name":"stdout","time":176.090709373,"data":"SHA256 data/push_val/frames.npy 5ec98c01ab88282c\n"}
+,{"stream_name":"stdout","time":176.091281493,"data":"SHA256 data/push_val/pos.npy 55a0abeaedb897ad\n"}
+,{"stream_name":"stdout","time":176.09152848,"data":"+ python -m latent_planner.train --out runs/kpush_fs4_s0 --lam 0.09 --seed 0 --frameskip 4 --train data/push_train --val data/push_val \u003e runs/kpush_fs4_s0/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":543.147588977,"data":"exit 0 after 367s\n"}
+,{"stream_name":"stdout","time":543.147667695,"data":"+ tail -3 runs/kpush_fs4_s0/stdout.txt\n"}
+,{"stream_name":"stdout","time":543.149763714,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":543.149784357,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":543.149790195,"data":"}\n"}
+,{"stream_name":"stdout","time":543.150143458,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":543.15015298,"data":"+ python -m latent_planner.eval_push --runs runs/kpush_fs4_s0 --taskset tune --tag push_dagger --running-w 0\n"}
+,{"stream_name":"stdout","time":550.756098601,"data":"latent_cem runs/kpush_fs4_s0        success 0.42 (short 0.63, long 0.33) steps 17.4 final block 19.0px 341 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":551.35967626,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":551.363255956,"data":"+ (python scripts/push_dagger.py --run runs/kpush_fs4_s0 --out runs/kdagger_s0 --rounds 3 --seed 0 \u0026\u0026 python -m latent_planner.eval_push --runs runs/kpush_fs4_s0 runs/kdagger_s0/round0 runs/kdagger_s0/round1 runs/kdagger_s0/round2 runs/kdagger_s0/round3 --taskset test --tag push_dagger --running-w 0) \u003e runs/kdagger_s0/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":1554.561747393,"data":"exit 0 after 1003s\n"}
+,{"stream_name":"stdout","time":1554.561791768,"data":"+ tail -3 runs/kdagger_s0/stdout.txt\n"}
+,{"stream_name":"stdout","time":1554.563951685,"data":"latent_cem runs/kdagger_s0/round1   success 0.76 (short 0.91, long 0.68) steps 20.2 final block 7.5px 336 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":1554.56397085,"data":"latent_cem runs/kdagger_s0/round2   success 0.72 (short 0.94, long 0.60) steps 19.9 final block 9.0px 339 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":1554.563976319,"data":"latent_cem runs/kdagger_s0/round3   success 0.72 (short 0.94, long 0.60) steps 19.0 final block 9.7px 333 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":1554.564260819,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":1554.576836679,"data":"+ python -m latent_planner.train --out runs/kpush_fs4_s1 --lam 0.09 --seed 1 --frameskip 4 --train data/push_train --val data/push_val \u003e runs/kpush_fs4_s1/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":1910.799558674,"data":"exit 0 after 356s\n"}
+,{"stream_name":"stdout","time":1910.799604993,"data":"+ tail -3 runs/kpush_fs4_s1/stdout.txt\n"}
+,{"stream_name":"stdout","time":1910.801786609,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":1910.801807297,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":1910.801812649,"data":"}\n"}
+,{"stream_name":"stdout","time":1910.802292622,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":1910.8023112,"data":"+ python -m latent_planner.eval_push --runs runs/kpush_fs4_s1 --taskset tune --tag push_dagger --running-w 0\n"}
+,{"stream_name":"stdout","time":1918.344285659,"data":"latent_cem runs/kpush_fs4_s1        success 0.51 (short 0.67, long 0.44) steps 18.4 final block 17.6px 338 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":1918.851732902,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":1918.869881654,"data":"+ (python scripts/push_dagger.py --run runs/kpush_fs4_s1 --out runs/kdagger_s1 --rounds 3 --seed 1 \u0026\u0026 python -m latent_planner.eval_push --runs runs/kpush_fs4_s1 runs/kdagger_s1/round0 runs/kdagger_s1/round1 runs/kdagger_s1/round2 runs/kdagger_s1/round3 --taskset test --tag push_dagger --running-w 0) \u003e runs/kdagger_s1/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":2942.435310511,"data":"exit 0 after 1024s\n"}
+,{"stream_name":"stdout","time":2942.435353321,"data":"+ tail -3 runs/kdagger_s1/stdout.txt\n"}
+,{"stream_name":"stdout","time":2942.437324391,"data":"latent_cem runs/kdagger_s1/round1   success 0.75 (short 1.00, long 0.62) steps 19.3 final block 9.0px 329 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":2942.437345509,"data":"latent_cem runs/kdagger_s1/round2   success 0.77 (short 0.94, long 0.68) steps 19.0 final block 7.3px 330 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":2942.437349449,"data":"latent_cem runs/kdagger_s1/round3   success 0.80 (short 0.97, long 0.71) steps 18.6 final block 6.5px 321 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":2942.437665974,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":2942.469393213,"data":"+ python -m latent_planner.train --out runs/kpush_fs4_s2 --lam 0.09 --seed 2 --frameskip 4 --train data/push_train --val data/push_val \u003e runs/kpush_fs4_s2/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":3295.374712041,"data":"exit 0 after 353s\n"}
+,{"stream_name":"stdout","time":3295.374766611,"data":"+ tail -3 runs/kpush_fs4_s2/stdout.txt\n"}
+,{"stream_name":"stdout","time":3295.3768446,"data":" \"device\": \"Tesla T4\",\n"}
+,{"stream_name":"stdout","time":3295.376864774,"data":" \"torch\": \"2.11.0+cu130\"\n"}
+,{"stream_name":"stdout","time":3295.376870328,"data":"}\n"}
+,{"stream_name":"stdout","time":3295.377250063,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":3295.377263481,"data":"+ python -m latent_planner.eval_push --runs runs/kpush_fs4_s2 --taskset tune --tag push_dagger --running-w 0\n"}
+,{"stream_name":"stdout","time":3302.849705678,"data":"latent_cem runs/kpush_fs4_s2        success 0.37 (short 0.70, long 0.23) steps 17.4 final block 22.3px 338 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":3303.349238187,"data":"exit 0 after 8s\n"}
+,{"stream_name":"stdout","time":3303.381760213,"data":"+ (python scripts/push_dagger.py --run runs/kpush_fs4_s2 --out runs/kdagger_s2 --rounds 3 --seed 2 \u0026\u0026 python -m latent_planner.eval_push --runs runs/kpush_fs4_s2 runs/kdagger_s2/round0 runs/kdagger_s2/round1 runs/kdagger_s2/round2 runs/kdagger_s2/round3 --taskset test --tag push_dagger --running-w 0) \u003e runs/kdagger_s2/stdout.txt 2\u003e\u00261\n"}
+,{"stream_name":"stdout","time":4289.196314325,"data":"exit 0 after 986s\n"}
+,{"stream_name":"stdout","time":4289.19638618,"data":"+ tail -3 runs/kdagger_s2/stdout.txt\n"}
+,{"stream_name":"stdout","time":4289.198546532,"data":"latent_cem runs/kdagger_s2/round1   success 0.73 (short 0.94, long 0.62) steps 20.5 final block 9.2px 326 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":4289.198567401,"data":"latent_cem runs/kdagger_s2/round2   success 0.77 (short 0.97, long 0.66) steps 20.4 final block 7.5px 332 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":4289.198573195,"data":"latent_cem runs/kdagger_s2/round3   success 0.78 (short 0.97, long 0.68) steps 22.6 final block 6.8px 320 ms/replan [K5xh4 S300 I10 rw0.0]\n"}
+,{"stream_name":"stdout","time":4289.198858281,"data":"exit 0 after 0s\n"}
+,{"stream_name":"stdout","time":4289.248374004,"data":"ALL_JOBS_DONE\n"}
+,{"stream_name":"stderr","time":4291.961696178,"data":"/usr/local/lib/python3.13/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\\|'\n"}
+,{"stream_name":"stderr","time":4291.961738044,"data":"  cells[i][c] = re.sub('\\\\\\\\\\|', '|', cell)\n"}
+,{"stream_name":"stderr","time":4292.244496645,"data":"/usr/local/lib/python3.13/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\\_'\n"}
+,{"stream_name":"stderr","time":4292.244536209,"data":"  text = re.sub(r'_', '\\_', text) # Escape underscores in display text\n"}
+,{"stream_name":"stderr","time":4293.11550988,"data":"[NbConvertApp] Converting notebook __script__.ipynb to html\n"}
+,{"stream_name":"stderr","time":4294.101781269,"data":"[NbConvertApp] Writing 375101 bytes to __results__.html\n"}
+]
