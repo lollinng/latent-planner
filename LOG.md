@@ -188,3 +188,9 @@
   level with the hand-written pusher (0.87). Browser planner, seed 0: 0.84 on the 100 test tasks (Python 0.87).
   Push demo switched to it (running_w 1 in meta.json). The cost preference flips with the loss: 8-step models want
   the final-state cost, 1-step models the running cost. RESULTS gains the sweep table; report.py lists it.
+- 03:40 Short loss + retraining on the planner's attempts stack (Kaggle lp-push-dagger-r2; collection with the
+  running cost, retraining with the 2-step loss). Running cost, tuning tasks (start -> round 1 / 2 / 3), 3 seeds:
+  2-step 0.75 -> 0.91 / 0.90 / 0.88; 2-step + dropout 0.79 -> 0.92 / 0.92 / 0.92. Test, running cost, round 1:
+  2-step 0.89 / 0.89 / 0.91, 2-step + dropout 0.93 / 0.93 / 0.93 (fresh models 0.85 / 0.84 / 0.79; round 0,
+  fine-tuning without new data, 0.86 / 0.86 / 0.80). Waiting for the 1-step + dropout version (lp-push-dagger-r1)
+  before choosing a demo model by tuning score.
