@@ -175,3 +175,9 @@
   is what helps. Test, final-state cost: base 0.52 / 0.52 / 0.49, round 3 0.72 / 0.80 / 0.78 (long 0.60-0.71 vs
   0.34-0.38). The planner reaches the goal in 45-49% of collection episodes in round 1 and 64-69% by round 3.
   Per-round logs in results/push_dagger/. Next: DAgger on top of the short-rollout loss.
+- 02:05 Push demo switched to the retrained model: Kaggle seed 0 after 2 rounds of predictor retraining on the
+  planner's own attempts (round picked by mean tuning score across seeds, seed fixed in advance), final-state
+  cost. Test, 3 seeds: 0.72 / 0.77 / 0.77 (mean 0.75; short 0.95, long 0.65) vs 0.52 for the previous demo model.
+  Browser planner (JS + ONNX Runtime Web) on the 100 test tasks: 0.73 (Python 0.72). Same predictor size, so plan
+  time is unchanged (0.33 s per replan in headless Chrome). Page note, WRITEUP, REPORT and RESULTS updated;
+  report.py can now select retraining rounds (runs/x_s0/round2); export.py accepts retraining summaries.

@@ -15,6 +15,10 @@ planner given the true simulator and straight-line distance reaches 87% (74% on 
 Everything runs on a 4 GB laptop GPU in about 5 minutes per model, and the planner runs in the browser with ONNX
 Runtime Web.
 
+A second scene, pushing a block onto a target, is harder: the same recipe gets 39%, rising to 52% with a
+final-state-only planning cost and to 75% (3 seeds; 73% in the browser) after retraining the predictor on the
+planner's own attempts.
+
 ## Setup
 
 **Environment.** A 64×64 arena with a 2 px border and a vertical wall with a 14 px door. The agent is a radius-3
@@ -185,7 +189,7 @@ which roughly halves the browser download, so the demo now runs the LayerNorm mo
 scores 100% on the test tasks with 2.8 MB of model files, against 99% and 5.0 MB for the BatchNorm model it
 replaced.
 
-## Scene 2: Push (stretch goal, partly works)
+## Scene 2: Push (stretch goal, mostly works)
 
 The second scene is a walled room with an 8×8 px block that the agent pushes. Pushing is kinematic and
 axis-separated: the block moves with the agent and stops at walls, with no momentum or rotation. Like the
@@ -198,10 +202,15 @@ image shows the agent where a pusher would be.
 
 | Method | Seeds | Success | Short push (< 20 px) | Long push | Steps (successes) | Per-seed |
 |---|---|---|---|---|---|---|
-| Latent CEM (λ=0.09, frameskip 4), final-state cost: in the demo | 3 | 52 ± 1% | 84 ± 4% | 34 ± 1% | 15.4 | 0.50, 0.53, 0.52 |
+| Predictor retrained on 2 rounds of the planner's own attempts, final-state cost: in the demo | 3 | 75 ± 2% | 95 ± 1% | 65 ± 3% | 19.8 | 0.72, 0.77, 0.77 |
+| Browser planner (JS + ONNX Runtime Web, retrained seed 0, 2 rounds), final-state cost | 1 | 73% | 94% | 62% | 18.8 | 0.73 (Python: 0.72) |
+| Same, 3 rounds | 3 | 77 ± 3% | 96 ± 1% | 66 ± 5% | 20.0 | 0.72, 0.80, 0.78 |
+| Same fine-tuning without new data (control) | 3 | 55 ± 1% | 85 ± 3% | 38 ± 2% | 17.0 | 0.53, 0.55, 0.56 |
+| Starting models (demo recipe retrained on Kaggle), final-state cost | 3 | 51 ± 1% | 79 ± 3% | 36 ± 2% | 16.6 | 0.52, 0.52, 0.49 |
+| Latent CEM (λ=0.09, frameskip 4), final-state cost (demo 22-23 Nov) | 3 | 52 ± 1% | 84 ± 4% | 34 ± 1% | 15.4 | 0.50, 0.53, 0.52 |
 | Same model, running cost (the demo until 22 Nov) | 3 | 39 ± 1% | 74 ± 0% | 19 ± 2% | 11.2 | 0.40, 0.37, 0.39 |
-| Browser planner (JS + ONNX Runtime Web, push_fs4_s0), final-state cost | 1 | 52% | 74% | 40% | 17.0 | 0.52 (Python: 0.50) |
-| Browser planner, running cost | 1 | 37% | 71% | 18% | 10.9 | 0.37 (Python: 0.40) |
+| Browser planner, previous demo model (push_fs4_s0), final-state cost | 1 | 52% | 74% | 40% | 17.0 | 0.52 (Python: 0.50) |
+| Browser planner, previous demo model, running cost | 1 | 37% | 71% | 18% | 10.9 | 0.37 (Python: 0.40) |
 | 512×3 predictor, final-state cost | 3 | 55 ± 3% | 86 ± 4% | 38 ± 5% | 17.2 | 0.54, 0.59, 0.52 |
 | 512×3 predictor, running cost | 3 | 45 ± 3% | 84 ± 5% | 24 ± 3% | 11.4 | 0.47, 0.47, 0.40 |
 | LayerNorm projector, running cost | 3 | 32 ± 3% | 58 ± 11% | 18 ± 2% | 10.7 | 0.35, 0.28, 0.33 |
@@ -210,7 +219,9 @@ image shows the agent where a pusher would be.
 | Oracle CEM: true simulator, state-distance cost | - | 64% | 91% | 49% | 11.1 | - |
 | Random actions | - | 1% | 3% | 0% | 9.0 | - |
 
-100 fixed test tasks; each goal is the end of a 30-step push from the start. Success = block within 3 px of its target within 60 steps; long = the block must move 20 px or more. Mean ± std over 3 training seeds.
+100 fixed test tasks; each goal is the end of a 30-step push from the start. Success = block within 3 px of its target within 60 steps; long = the block must move 20 px or more. Mean ± std over 3 training seeds. The retrained
+models are the "Starting models" row after predictor retraining (next sections); those starting models are the
+demo recipe re-trained on the Kaggle T4, so they differ slightly from push_fs4_s0-s2.
 
 #### Variants tried on the tuning tasks (seed 0 unless noted)
 
@@ -228,7 +239,7 @@ image shows the agent where a pusher would be.
 | push_ln_fs4_s1 | K5xh4 S300 I10 rw1.0 | 27% | 40% | 21% | 4.8 |
 | push_ln_fs4_s2 | K5xh4 S300 I10 rw1.0 | 22% | 40% | 14% | 3.7 |
 
-**What didn't work, and why.** The planner gets 74% of short pushes but only 19% of long ones, against 87% / 80% for
+**What didn't work, and why (first models).** The planner gets 74% of short pushes but only 19% of long ones, against 87% / 80% for
 a hand-written pusher with true positions. In failures it does push the block, just not toward the target, so the
 problem is the model's imagined contact dynamics, not the search:
 
@@ -286,13 +297,40 @@ Swapping one part at a time for the real thing, on the 100 tuning tasks with the
   (vs 40% with 8 steps; published JEPA ablations also favour short rollout losses), frameskip 1 37% at 3.6× the
   plan time.
 
+#### What fixed most of it: training the predictor differently
+
+Both top suggestions from the literature review below worked, each on its own lifting push from about 50% to 70-80%
+with the same encoder size, predictor size, data and planner:
+
+- **Retrain the predictor on the planner's own attempts** (DAgger-style data aggregation,
+  `scripts/push_dagger.py`). Freeze the encoder (its distance is already a good cost), run the planner with the
+  final-state cost on 2,000 fresh random tasks with Gaussian action noise (σ = 0.3), encode the frames of what
+  really happened, and retrain the predictor on the original episodes plus these; repeat. No rewards or positions
+  are used. Test, 3 seeds, final-state cost: 51% → 75% after 2 rounds, 77% after 3; long pushes 36% → 65%. The
+  same fine-tuning without the new data gives 55%, so the gain comes from the planner's data. Most of it arrives
+  in round 1 (tuning tasks: 0.42 / 0.51 / 0.37 → 0.72 / 0.68 / 0.74), and by round 3 the planner reaches the goal in
+  64-69% of its collection episodes (45-49% in round 1). This is the direct fix for model exploitation: the
+  planner's failed plans visit exactly the states and actions the scripted data barely covers, and training on what
+  really happened there removes the errors the planner was exploiting. The demo uses seed 0 after 2 rounds
+  (round picked by mean tuning score; browser planner 73% on the test tasks).
+- **Use a 2-step rollout loss instead of 8.** The training loss, copied from two rooms, also chains the predictor
+  8 steps open-loop on each window. With 2 steps (one teacher-forced step plus one open-loop step), the tuning
+  tasks go from 0.40 / 0.48 / 0.41 to 0.69 / 0.66 / 0.72 with the final-state cost and 0.72 / 0.76 / 0.78 with the
+  running cost (3 seeds; adding predictor dropout 0.1: 0.79 / 0.77 / 0.82 with the running cost, but worse with
+  the final-state cost). The 12-step loss (25%) fits the same trend. Dropout alone, with the 8-step loss, hurts
+  (24-37%). A likely reason: the long open-loop loss pulls the predictor towards a smooth average over what could happen at
+  contact, which is fine for walking in two rooms but blurs the moment the block starts or stops moving.
+
+Combining the two (2-step loss, then retraining with the same loss) is running on the Kaggle T4.
+
 A literature review of how others handle pushing (`reports/World models for block pushing.md`) points the same
 way: published PushT results use ~40× our data, one-step or 2-step prediction losses, predictor dropout, and
 final-state costs; retraining the predictor on the planner's own rollouts is the best-supported fix for the
 model exploitation seen here.
 
 Scripts: `scripts/push_cost_vs_dynamics.py` (uses a batched torch port of the push renderer, checked pixel-exact
-against `env_push.render`), `scripts/push_oracle_horizon.py`, `scripts/push_search.sh`, `scripts/train_push_pred.sh`.
+against `env_push.render`), `scripts/push_oracle_horizon.py`, `scripts/push_search.sh`, `scripts/train_push_pred.sh`,
+`scripts/push_dagger.py` (predictor retraining; per-round logs in `results/push_dagger/`).
 
 ## Browser demo
 
@@ -317,8 +355,9 @@ running score in the status line, and the demo moves on to a new task. Push task
 test-set generator (`makeTask` in `env_push.js`: random start, then 30 steps of the scripted pusher; same
 distribution of push lengths as the Python test set). Chaining each push from wherever the last one ended was much
 harder than the test set, because the agent ends every push pressed against the block: 0 of 12 chained tasks were
-reached. The push demo loop now reaches 31 of 64 tasks (48%) with its 120-step limit, and the browser planner scores
-37% on the 100 test tasks with the test's 60 steps (`tests/web_eval.py --scene push`).
+reached. With the first push model the demo loop then reached 31 of 64 tasks (48%) with its 120-step limit, and the
+browser planner scored 37% on the 100 test tasks with the test's 60 steps (`tests/web_eval.py --scene push`); the
+current model (retrained predictor, final-state cost) scores 73% there.
 
 ## Limitations
 

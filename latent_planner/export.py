@@ -198,8 +198,9 @@ def export(run: Path, final_out: Path, cem: CEMConfig, opset: int = 17, fp16: bo
                   "grid_rmse_px": probe_rmse, "block_rmse_px": probe_rmse_block},
         "grid": grid_meta,
         "pca_explained_top2": (sv[:2] ** 2 / (sv**2).sum()).round(4).tolist(),
-        "train": {k: summary[k] for k in ("val_eff_rank", "probe_rmse_px", "train_seconds")},
-        "val_rollout_nmse": [round(x, 5) for x in summary["val_rollout_nmse"]],
+        # predictor-retraining rounds (scripts/push_dagger.py) store only the rollout error, as val_nmse
+        "train": {k: summary.get(k) for k in ("val_eff_rank", "probe_rmse_px", "train_seconds")},
+        "val_rollout_nmse": [round(x, 5) for x in summary.get("val_rollout_nmse", summary.get("val_nmse", []))],
         "parity": parity,
         "bytes": {f: (out / f).stat().st_size for f in files},
     }

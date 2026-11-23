@@ -29,10 +29,17 @@ CONFIGS = [  # (run-name prefix, label, ours, color); runs are grouped by name, 
 ]
 
 
-def runs_named(df, prefix, col="run"):
-    """Rows whose run is exactly <prefix><seed digit> (works for 'runs/x_s0' and bare 'x_s0')."""
-    names = df[col].fillna("").map(lambda r: Path(r).name)
-    return df[names.str.fullmatch(re.escape(prefix) + r"\d")]
+def run_key(r: str) -> str:
+    """'runs/x_s0' -> 'x_s0', 'runs/x_s0/round2' -> 'x_s0/round2', bare 'x_s0' unchanged."""
+    parts = Path(r).parts
+    return "/".join(parts[1:] if parts and parts[0] == "runs" else parts)
+
+
+def runs_named(df, prefix, col="run", suffix=""):
+    """Rows whose run is exactly <prefix><seed digit><suffix> (works for 'runs/x_s0' and bare 'x_s0'; a suffix
+    like '/round2' picks a predictor-retraining round inside each seed's directory)."""
+    names = df[col].fillna("").map(run_key)
+    return df[names.str.fullmatch(re.escape(prefix) + r"\d" + re.escape(suffix))]
 BASELINES = [
     ("oracle_cem", "Oracle CEM: true simulator, straight-line cost"),
     ("greedy", "Straight line to goal (true positions)"),
@@ -160,14 +167,20 @@ def main() -> None:
         ep = pd.read_csv(res / "eval_push.csv")
         et = ep[ep.taskset == "test"]
         pm = ["success", "success_short", "success_long", "mean_steps_success"]
-        for tag, prefix, plabel in [
-                ("push_rw0", "push_fs4_s", "Latent CEM (λ=0.09, frameskip 4), final-state cost: in the demo"),
-                ("push", "push_fs4_s", "Same model, running cost (the demo until 22 Nov)"),
-                ("push_rw0", "push_p512x3_s", "512×3 predictor, final-state cost"),
-                ("push_dyn", "push_p512x3_s", "512×3 predictor, running cost"),
-                ("push", "push_ln_fs4_s", "LayerNorm projector, running cost"),
-                ("push", "pushv2_ln_s", "LayerNorm, 2× data (90% pushing), 12k steps, running cost")]:
-          g = runs_named(et[(et.method == "latent_cem") & (et.tag == tag)], prefix).drop_duplicates("run", keep="last")
+        for tag, prefix, suffix, plabel in [
+                ("push_dagger", "kdagger_s", "/round2",
+                 "Predictor retrained on 2 rounds of the planner's own attempts, final-state cost: in the demo"),
+                ("push_dagger", "kdagger_s", "/round3", "Same, 3 rounds"),
+                ("push_dagger", "kdagger_s", "/round0", "Same fine-tuning without new data (control)"),
+                ("push_dagger", "kpush_fs4_s", "", "Starting models (demo recipe retrained on Kaggle), final-state cost"),
+                ("push_rw0", "push_fs4_s", "", "Latent CEM (λ=0.09, frameskip 4), final-state cost (demo 22-23 Nov)"),
+                ("push", "push_fs4_s", "", "Same model, running cost (the demo until 22 Nov)"),
+                ("push_rw0", "push_p512x3_s", "", "512×3 predictor, final-state cost"),
+                ("push_dyn", "push_p512x3_s", "", "512×3 predictor, running cost"),
+                ("push", "push_ln_fs4_s", "", "LayerNorm projector, running cost"),
+                ("push", "pushv2_ln_s", "", "LayerNorm, 2× data (90% pushing), 12k steps, running cost")]:
+          g = runs_named(et[(et.method == "latent_cem") & (et.tag == tag)], prefix, suffix=suffix)
+          g = g.drop_duplicates("run", keep="last")
           if not g.empty:
             mu, sd = g[pm].mean(), g[pm].std(ddof=0)
             push_rows.append({"label": plabel, "ours": True, "n_seeds": len(g),
@@ -204,8 +217,9 @@ def main() -> None:
             md += ["### Push variants tried on the tuning tasks (seed 0 unless noted)", "",
                    "| Run | Planner | Success | Short | Long | Block read-out error (px) |", "|---|---|---|---|---|---|"]
             for _, r in tv.iterrows():
-                sm = json.loads((Path("runs") / Path(r.run).name / "summary.json").read_text())
-                md.append(f"| {Path(r.run).name} | {r.cem} | {pct(r.success)} | {pct(r.success_short)} | "
+                sp = Path("runs") / run_key(r.run) / "summary.json"
+                sm = json.loads(sp.read_text()) if sp.exists() else {}
+                md.append(f"| {run_key(r.run)} | {r.cem} | {pct(r.success)} | {pct(r.success_short)} | "
                           f"{pct(r.success_long)} | {sm.get('probe_rmse_block_px', float('nan')):.1f} |")
             md += [""]
 

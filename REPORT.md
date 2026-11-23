@@ -90,11 +90,16 @@ extra long cross-room tasks it goes from 50% to 83% at 4 steps and from 83% to *
 
 - A second scene where the agent pushes a block to a target. Same model, objective and planner, with its own data,
   bit-exact JS port and test set.
-- **Test result (3 seeds): 52% ± 1%** (84% short pushes, 34% long), up from 39% (74% / 19%) by one planner change:
-  CEM now scores only the final imagined state. The running cost, needed in two rooms, penalised the detour a long
-  push needs (walking away from the target to get behind the block). Same model, no retraining; the browser
-  planner scores 52% on the test tasks. For comparison: a hand-written pusher using true positions gets 87%, the
-  oracle CEM (true simulator) 64%, random actions 1%.
+- **Test result (3 seeds): 75% ± 2%** (95% short pushes, 65% long; browser planner 73%), up from 52% by
+  retraining the predictor on the planner's own attempts: freeze the encoder, run the planner on 2,000 fresh
+  random tasks, encode what really happened, retrain the predictor on old plus new episodes, twice. No rewards or
+  positions are used. The same fine-tuning without the new data gives 55%, so the planner's data is what helps.
+  For comparison: a hand-written pusher using true positions gets 87%, the oracle CEM (true simulator) 64%,
+  random actions 1%.
+- **Earlier step, 39% → 52%:** CEM now scores only the final imagined state. The running cost, needed in two rooms,
+  penalised the detour a long push needs (walking away from the target to get behind the block).
+- **Also found:** a 2-step prediction loss instead of the 8-step one used in two rooms lifts tuning-task success
+  from 40-48% to 66-78% (3 seeds) on its own. Combining it with the retraining is running.
 - **Where it loses:** with the true simulator and the model's own latent cost, the same planner reaches 86% on the
   tuning tasks, so the embedding is a good cost and the learned contact dynamics are the weak part. More search
   doesn't help the learned model (it does help the true simulator: 57% → 81%), a sign the planner exploits model
@@ -102,14 +107,14 @@ extra long cross-room tasks it goes from 50% to 83% at 4 steps and from 83% to *
   the small one.
 - **How others do it:** a literature review (`reports/World models for block pushing.md`) found published PushT
   results use ~40× our data, short prediction losses, predictor dropout and final-state costs, and that
-  retraining the predictor on the planner's own rollouts is the best-supported fix for model exploitation.
-- **Why it's weaker:** the model's imagined contact dynamics are inaccurate. Prediction error is ~4× the two-room
+  retraining the predictor on the planner's own rollouts is the best-supported fix for model exploitation. Both
+  of its top two suggestions worked here (above).
+- **Why the first models were weaker:** the model's imagined contact dynamics were inaccurate. Prediction error is ~4× the two-room
   model's, and the block position is encoded only to ~4 px. A longer planning horizon didn't help.
   Weaker SIGReg (λ = 0.01) made the model ignore the block: good prediction loss, useless for pushing (17%).
 - Later variants on the Kaggle T4: a LayerNorm projector on the same data scored 32%. Twice the data (90% pushing)
   with LayerNorm and 12k steps scored 40%: short pushes 83%, long ones still 17%. Subgoals from a waypoint graph
-  of push frames didn't help either (31-35% vs 32% on the tuning tasks). The demo keeps the 39% model and states
-  that number on the page.
+  of push frames didn't help either (31-35% vs 32% on the tuning tasks).
 - **The push demo now behaves like the test.** Its browser planner scores 37% on the 100 test pushes (Python, same
   model: 40%). Before this fix the demo chained each new push from wherever the last one ended, with the agent
   pressed against the block, and when a push failed it kept trying forever: 0 of 12 chained tasks were reached in

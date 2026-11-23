@@ -49,7 +49,11 @@ Rollout error is normalised by the latent variance (1.0 = no better than the mea
 
 | Method | Seeds | Success | Short push (< 20 px) | Long push | Steps (successes) | Per-seed |
 |---|---|---|---|---|---|---|
-| Latent CEM (λ=0.09, frameskip 4), final-state cost: in the demo | 3 | 52 ± 1% | 84 ± 4% | 34 ± 1% | 15.4 | 0.50, 0.53, 0.52 |
+| Predictor retrained on 2 rounds of the planner's own attempts, final-state cost: in the demo | 3 | 75 ± 2% | 95 ± 1% | 65 ± 3% | 19.8 | 0.72, 0.77, 0.77 |
+| Same, 3 rounds | 3 | 77 ± 3% | 96 ± 1% | 66 ± 5% | 20.0 | 0.72, 0.80, 0.78 |
+| Same fine-tuning without new data (control) | 3 | 55 ± 1% | 85 ± 3% | 38 ± 2% | 17.0 | 0.53, 0.55, 0.56 |
+| Starting models (demo recipe retrained on Kaggle), final-state cost | 3 | 51 ± 1% | 79 ± 3% | 36 ± 2% | 16.6 | 0.52, 0.52, 0.49 |
+| Latent CEM (λ=0.09, frameskip 4), final-state cost (demo 22-23 Nov) | 3 | 52 ± 1% | 84 ± 4% | 34 ± 1% | 15.4 | 0.50, 0.53, 0.52 |
 | Same model, running cost (the demo until 22 Nov) | 3 | 39 ± 1% | 74 ± 0% | 19 ± 2% | 11.2 | 0.40, 0.37, 0.39 |
 | 512×3 predictor, final-state cost | 3 | 55 ± 3% | 86 ± 4% | 38 ± 5% | 17.2 | 0.54, 0.59, 0.52 |
 | 512×3 predictor, running cost | 3 | 45 ± 3% | 84 ± 5% | 24 ± 3% | 11.4 | 0.47, 0.47, 0.40 |
@@ -100,4 +104,25 @@ Rollout error is normalised by the latent variance (1.0 = no better than the mea
 | push_p512x3_s1 | K5xh4 S300 I10 rw0.0 | 48% | 70% | 39% | 4.5 |
 | push_p512x3_s2 | K5xh4 S300 I10 rw0.0 | 52% | 73% | 43% | 3.9 |
 | push3_p512x3_18k_s0 | K5xh4 S300 I10 rw1.0 | 45% | 73% | 33% | 3.6 |
+| push_r2_s0 | K5xh4 S300 I10 rw0.0 | 69% | 77% | 66% | 4.6 |
+| push_r2_s0 | K5xh4 S300 I10 rw1.0 | 72% | 100% | 60% | 4.6 |
+| push_drop_s0 | K5xh4 S300 I10 rw0.0 | 32% | 50% | 24% | 5.1 |
+| push_drop_s0 | K5xh4 S300 I10 rw1.0 | 24% | 47% | 14% | 5.1 |
+| push_r2drop_s0 | K5xh4 S300 I10 rw0.0 | 57% | 53% | 59% | 4.7 |
+| push_r2drop_s0 | K5xh4 S300 I10 rw1.0 | 79% | 87% | 76% | 4.7 |
+| push_r2_s1 | K5xh4 S300 I10 rw0.0 | 66% | 63% | 67% | 4.9 |
+| push_r2_s1 | K5xh4 S300 I10 rw1.0 | 76% | 90% | 70% | 4.9 |
+| push_drop_s1 | K5xh4 S300 I10 rw0.0 | 37% | 57% | 29% | 4.3 |
+| push_drop_s1 | K5xh4 S300 I10 rw1.0 | 27% | 43% | 20% | 4.3 |
+| push_r2drop_s1 | K5xh4 S300 I10 rw0.0 | 53% | 43% | 57% | 4.8 |
+| push_r2drop_s1 | K5xh4 S300 I10 rw1.0 | 77% | 83% | 74% | 4.8 |
+| push_r2_s2 | K5xh4 S300 I10 rw0.0 | 72% | 70% | 73% | 5.0 |
+| push_r2_s2 | K5xh4 S300 I10 rw1.0 | 78% | 90% | 73% | 5.0 |
+| push_drop_s2 | K5xh4 S300 I10 rw0.0 | 28% | 43% | 21% | 5.1 |
+| push_drop_s2 | K5xh4 S300 I10 rw1.0 | 27% | 40% | 21% | 5.1 |
+| push_r2drop_s2 | K5xh4 S300 I10 rw0.0 | 54% | 47% | 57% | 5.0 |
+| push_r2drop_s2 | K5xh4 S300 I10 rw1.0 | 82% | 90% | 79% | 5.0 |
+| kpush_fs4_s0 | K5xh4 S300 I10 rw0.0 | 42% | 63% | 33% | 4.2 |
+| kpush_fs4_s1 | K5xh4 S300 I10 rw0.0 | 51% | 67% | 44% | 4.0 |
+| kpush_fs4_s2 | K5xh4 S300 I10 rw0.0 | 37% | 70% | 23% | 4.2 |
 

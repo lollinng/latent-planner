@@ -62,10 +62,10 @@ const SCENES = {
     dir: "model_push/",
     caption: "Scene 2: the red dot has to shove the teal block onto the dashed yellow square.",
     hint: "Tap where the block should go. Drag the agent or the block to move them.",
-    note: "Harder scene. On 100 test pushes this model gets the block within 3 px of its target 52% of the time "
-      + "(3 training seeds): 84% for short pushes, 34% for long ones that need it to walk around the block first. "
-      + "Its imagined contact dynamics are the weak spot (see the write-up). Here each task gets up to 120 steps "
-      + "and the status line keeps score.",
+    note: "Harder scene. On 100 test pushes this model gets the block within 3 px of its target 75% of the time "
+      + "(3 training seeds): 95% for short pushes, 65% for long ones that need it to walk around the block first. "
+      + "Its predictor was retrained on the planner's own attempts, which fixed most of its contact mistakes "
+      + "(52% before; see the write-up). Here each task gets up to 120 steps and the status line keeps score.",
     render: EP.render,
     step: EP.stepState,
     // Goal image = block at the target and the agent just behind it along the main push direction, which is
