@@ -49,13 +49,19 @@ Rollout error is normalised by the latent variance (1.0 = no better than the mea
 
 | Method | Seeds | Success | Short push (< 20 px) | Long push | Steps (successes) | Per-seed |
 |---|---|---|---|---|---|---|
-| 1-step prediction loss + predictor dropout 0.1, running cost: in the demo | 3 | 88 ± 1% | 96 ± 1% | 84 ± 2% | 19.4 | 0.87, 0.90, 0.87 |
+| 1-step loss + dropout, predictor retrained on 1 round of the planner's own attempts, running cost: in the demo | 3 | 91 ± 0% | 98 ± 1% | 87 ± 1% | 18.0 | 0.91, 0.91, 0.90 |
+| Same, 2 rounds | 3 | 94 ± 2% | 99 ± 1% | 91 ± 2% | 17.8 | 0.92, 0.96, 0.94 |
+| Same fine-tuning without new data (control) | 3 | 91 ± 2% | 97 ± 2% | 88 ± 3% | 19.2 | 0.88, 0.94, 0.91 |
+| Starting models: 1-step loss + dropout (Kaggle), running cost | 3 | 84 ± 0% | 97 ± 2% | 77 ± 1% | 18.9 | 0.84, 0.85, 0.84 |
+| 2-step loss + dropout, retrained on 1 round, running cost | 3 | 93 ± 0% | 99 ± 1% | 90 ± 1% | 17.6 | 0.93, 0.93, 0.93 |
+| 2-step loss, retrained on 1 round, running cost | 3 | 90 ± 1% | 100 ± 0% | 84 ± 1% | 16.4 | 0.89, 0.89, 0.91 |
+| 1-step loss + dropout, running cost (no retraining) | 3 | 88 ± 1% | 96 ± 1% | 84 ± 2% | 19.4 | 0.87, 0.90, 0.87 |
 | 8-step loss, predictor retrained on 2 rounds of the planner's own attempts, final-state cost | 3 | 75 ± 2% | 95 ± 1% | 65 ± 3% | 19.8 | 0.72, 0.77, 0.77 |
 | Same, 3 rounds | 3 | 77 ± 3% | 96 ± 1% | 66 ± 5% | 20.0 | 0.72, 0.80, 0.78 |
 | Same fine-tuning without new data (control) | 3 | 55 ± 1% | 85 ± 3% | 38 ± 2% | 17.0 | 0.53, 0.55, 0.56 |
-| Starting models (demo recipe retrained on Kaggle), final-state cost | 3 | 51 ± 1% | 79 ± 3% | 36 ± 2% | 16.6 | 0.52, 0.52, 0.49 |
-| Latent CEM (λ=0.09, frameskip 4), final-state cost (demo 22-23 Nov) | 3 | 52 ± 1% | 84 ± 4% | 34 ± 1% | 15.4 | 0.50, 0.53, 0.52 |
-| Same model, running cost (the demo until 22 Nov) | 3 | 39 ± 1% | 74 ± 0% | 19 ± 2% | 11.2 | 0.40, 0.37, 0.39 |
+| Starting models (8-step loss, Kaggle), final-state cost | 3 | 51 ± 1% | 79 ± 3% | 36 ± 2% | 16.6 | 0.52, 0.52, 0.49 |
+| First models (8-step loss), final-state cost | 3 | 52 ± 1% | 84 ± 4% | 34 ± 1% | 15.4 | 0.50, 0.53, 0.52 |
+| Same models, running cost | 3 | 39 ± 1% | 74 ± 0% | 19 ± 2% | 11.2 | 0.40, 0.37, 0.39 |
 | 512×3 predictor, final-state cost | 3 | 55 ± 3% | 86 ± 4% | 38 ± 5% | 17.2 | 0.54, 0.59, 0.52 |
 | 512×3 predictor, running cost | 3 | 45 ± 3% | 84 ± 5% | 24 ± 3% | 11.4 | 0.47, 0.47, 0.40 |
 | LayerNorm projector, running cost | 3 | 32 ± 3% | 58 ± 11% | 18 ± 2% | 10.7 | 0.35, 0.28, 0.33 |
@@ -166,4 +172,13 @@ Rollout length = open-loop predictor steps per training window in the prediction
 | push_r4drop_s2 | K5xh4 S300 I10 rw0.0 | 55% | 67% | 50% | 4.1 |
 | push_r4drop_s2 | K5xh4 S300 I10 rw1.0 | 48% | 80% | 34% | 4.1 |
 | push_fs4_s2 | K5xh4 S300 I10 rw1.0 | 29% | 50% | 20% | 4.3 |
+| kpush_r2_s0 | K5xh4 S300 I10 rw1.0 | 72% | 100% | 60% | 4.6 |
+| kpush_r2_s1 | K5xh4 S300 I10 rw1.0 | 76% | 90% | 70% | 4.9 |
+| kpush_r2_s2 | K5xh4 S300 I10 rw1.0 | 78% | 90% | 73% | 5.0 |
+| kpush_r2drop_s0 | K5xh4 S300 I10 rw1.0 | 80% | 87% | 77% | 4.7 |
+| kpush_r2drop_s1 | K5xh4 S300 I10 rw1.0 | 74% | 83% | 70% | 4.8 |
+| kpush_r2drop_s2 | K5xh4 S300 I10 rw1.0 | 82% | 90% | 79% | 5.0 |
+| kpush_r1drop_s0 | K5xh4 S300 I10 rw1.0 | 85% | 93% | 81% | 6.1 |
+| kpush_r1drop_s1 | K5xh4 S300 I10 rw1.0 | 86% | 97% | 81% | 6.6 |
+| kpush_r1drop_s2 | K5xh4 S300 I10 rw1.0 | 87% | 97% | 83% | 6.2 |
 

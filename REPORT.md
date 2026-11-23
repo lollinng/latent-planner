@@ -90,15 +90,17 @@ extra long cross-room tasks it goes from 50% to 83% at 4 steps and from 83% to *
 
 - A second scene where the agent pushes a block to a target. Same model, objective and planner, with its own data,
   bit-exact JS port and test set.
-- **Test result (3 seeds): 88% ± 1%** (96% short pushes, 84% long; browser planner 84%), the same as a
-  hand-written pusher using true positions (87%). The fix was in training, not planning: the prediction loss,
-  copied from two rooms, chained the predictor 8 steps open-loop. Training on one-step predictions only, with
-  predictor dropout 0.1, lifts tuning-task success from 31% to 88% with the running cost (sweep over 8/4/2/1 steps,
-  with and without dropout, 3 seeds each, in WRITEUP). For comparison: oracle CEM (true simulator) 64%, random 1%.
-- **Second fix that also works:** retraining the predictor on the planner's own attempts (freeze the encoder, run
-  the planner on 2,000 fresh tasks, encode what really happened, retrain on old plus new episodes, twice) lifts the
-  8-step model from 51% to 75% on test. The same fine-tuning without the new data gives 55%. Combining the two is
-  running.
+- **Test result (3 seeds): 91% ± 0%** (98% short pushes, 87% long; browser planner 90%), above a hand-written
+  pusher using true positions (87%). Two training fixes, no planner change:
+  1. Train the predictor on one-step predictions (with dropout 0.1) instead of 8-step open-loop rollouts, the
+     two-room default: 52% → 88% on test. Sweep over 8/4/2/1 steps, with and without dropout, 3 seeds each, in
+     WRITEUP. With these models the running cost beats the final-state cost.
+  2. Retrain the predictor on the planner's own attempts (encoder frozen; run the planner on 2,000 fresh tasks,
+     encode what really happened, retrain on old plus new episodes): 88% → 91% after one round, 94% after two.
+     For these models most of that is the extra training itself (no-new-data control: 91%); for the 8-step models
+     the planner's data was what helped (51% → 75%, control 55%).
+- Run-to-run noise is about 3-4 points (the same recipe trained twice: 88% and 84%). For comparison: oracle CEM
+  (true simulator) 64%, random actions 1%.
 - **Earlier step, 39% → 52%:** CEM scoring only the final imagined state, which suits the 8-step models (the
   running cost penalised the detour a long push needs). With 1-step models the running cost is better.
 - **Where it loses:** with the true simulator and the model's own latent cost, the same planner reaches 86% on the

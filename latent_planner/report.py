@@ -167,22 +167,30 @@ def main() -> None:
         ep = pd.read_csv(res / "eval_push.csv")
         et = ep[ep.taskset == "test"]
         pm = ["success", "success_short", "success_long", "mean_steps_success"]
-        for tag, prefix, suffix, plabel in [
-                ("push_reg", "push_r1drop_s", "",
-                 "1-step prediction loss + predictor dropout 0.1, running cost: in the demo"),
-                ("push_dagger", "kdagger_s", "/round2",
+        R1, R0 = "K5xh4 S300 I10 rw1.0", "K5xh4 S300 I10 rw0.0"
+        for tag, prefix, suffix, cem, plabel in [
+                ("push_dagger_r1", "kdagger_r1drop_s", "/round1", R1,
+                 "1-step loss + dropout, predictor retrained on 1 round of the planner's own attempts, running cost: "
+                 "in the demo"),
+                ("push_dagger_r1", "kdagger_r1drop_s", "/round2", R1, "Same, 2 rounds"),
+                ("push_dagger_r1", "kdagger_r1drop_s", "/round0", R1, "Same fine-tuning without new data (control)"),
+                ("push_dagger_r1", "kpush_r1drop_s", "", R1, "Starting models: 1-step loss + dropout (Kaggle), running cost"),
+                ("push_dagger_r2", "kdagger_r2drop_s", "/round1", R1, "2-step loss + dropout, retrained on 1 round, running cost"),
+                ("push_dagger_r2", "kdagger_r2_s", "/round1", R1, "2-step loss, retrained on 1 round, running cost"),
+                ("push_reg", "push_r1drop_s", "", R1, "1-step loss + dropout, running cost (no retraining)"),
+                ("push_dagger", "kdagger_s", "/round2", R0,
                  "8-step loss, predictor retrained on 2 rounds of the planner's own attempts, final-state cost"),
-                ("push_dagger", "kdagger_s", "/round3", "Same, 3 rounds"),
-                ("push_dagger", "kdagger_s", "/round0", "Same fine-tuning without new data (control)"),
-                ("push_dagger", "kpush_fs4_s", "", "Starting models (demo recipe retrained on Kaggle), final-state cost"),
-                ("push_rw0", "push_fs4_s", "", "Latent CEM (λ=0.09, frameskip 4), final-state cost (demo 22-23 Nov)"),
-                ("push", "push_fs4_s", "", "Same model, running cost (the demo until 22 Nov)"),
-                ("push_rw0", "push_p512x3_s", "", "512×3 predictor, final-state cost"),
-                ("push_dyn", "push_p512x3_s", "", "512×3 predictor, running cost"),
-                ("push", "push_ln_fs4_s", "", "LayerNorm projector, running cost"),
-                ("push", "pushv2_ln_s", "", "LayerNorm, 2× data (90% pushing), 12k steps, running cost")]:
-          g = runs_named(et[(et.method == "latent_cem") & (et.tag == tag)], prefix, suffix=suffix)
-          g = g.drop_duplicates("run", keep="last")
+                ("push_dagger", "kdagger_s", "/round3", R0, "Same, 3 rounds"),
+                ("push_dagger", "kdagger_s", "/round0", R0, "Same fine-tuning without new data (control)"),
+                ("push_dagger", "kpush_fs4_s", "", R0, "Starting models (8-step loss, Kaggle), final-state cost"),
+                ("push_rw0", "push_fs4_s", "", None, "First models (8-step loss), final-state cost"),
+                ("push", "push_fs4_s", "", None, "Same models, running cost"),
+                ("push_rw0", "push_p512x3_s", "", None, "512×3 predictor, final-state cost"),
+                ("push_dyn", "push_p512x3_s", "", None, "512×3 predictor, running cost"),
+                ("push", "push_ln_fs4_s", "", None, "LayerNorm projector, running cost"),
+                ("push", "pushv2_ln_s", "", None, "LayerNorm, 2× data (90% pushing), 12k steps, running cost")]:
+          sel = et[(et.method == "latent_cem") & (et.tag == tag) & ((et.cem == cem) if cem else True)]
+          g = runs_named(sel, prefix, suffix=suffix).drop_duplicates("run", keep="last")
           if not g.empty:
             mu, sd = g[pm].mean(), g[pm].std(ddof=0)
             push_rows.append({"label": plabel, "ours": True, "n_seeds": len(g),

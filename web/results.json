@@ -119,7 +119,109 @@
  "note": "100 fixed test tasks, half needing the door; success = within 4 px of the goal within 50 steps. Mean \u00b1 std over 3 training seeds. Oracle CEM plans with the true simulator but straight-line distance.",
  "push_rows": [
   {
-   "label": "1-step prediction loss + predictor dropout 0.1, running cost: in the demo",
+   "label": "1-step loss + dropout, predictor retrained on 1 round of the planner's own attempts, running cost: in the demo",
+   "ours": true,
+   "n_seeds": 3,
+   "success": 0.9066666666666667,
+   "success_std": 0.004714045207910321,
+   "success_short": 0.980952380952381,
+   "success_short_std": 0.01346870059402948,
+   "success_long": 0.8666666666666667,
+   "success_long_std": 0.007252377242938923,
+   "steps": 18.045258445258444,
+   "per_seed": [
+    0.91,
+    0.91,
+    0.9
+   ]
+  },
+  {
+   "label": "Same, 2 rounds",
+   "ours": true,
+   "n_seeds": 3,
+   "success": 0.94,
+   "success_std": 0.016329931618554488,
+   "success_short": 0.9904761904761905,
+   "success_short_std": 0.01346870059402948,
+   "success_long": 0.9128205128205128,
+   "success_long_std": 0.019187986598840707,
+   "steps": 17.78824583718779,
+   "per_seed": [
+    0.92,
+    0.96,
+    0.94
+   ]
+  },
+  {
+   "label": "Same fine-tuning without new data (control)",
+   "ours": true,
+   "n_seeds": 3,
+   "success": 0.91,
+   "success_std": 0.024494897427831758,
+   "success_short": 0.9714285714285715,
+   "success_short_std": 0.02332847374079218,
+   "success_long": 0.8769230769230769,
+   "success_long_std": 0.03323456768414286,
+   "steps": 19.23854957099638,
+   "per_seed": [
+    0.88,
+    0.94,
+    0.91
+   ]
+  },
+  {
+   "label": "Starting models: 1-step loss + dropout (Kaggle), running cost",
+   "ours": true,
+   "n_seeds": 3,
+   "success": 0.8433333333333333,
+   "success_std": 0.004714045207910321,
+   "success_short": 0.9714285714285715,
+   "success_short_std": 0.02332847374079218,
+   "success_long": 0.7743589743589743,
+   "success_long_std": 0.014504754485877899,
+   "steps": 18.9281512605042,
+   "per_seed": [
+    0.84,
+    0.85,
+    0.84
+   ]
+  },
+  {
+   "label": "2-step loss + dropout, retrained on 1 round, running cost",
+   "ours": true,
+   "n_seeds": 3,
+   "success": 0.93,
+   "success_std": 0.0,
+   "success_short": 0.9904761904761905,
+   "success_short_std": 0.01346870059402948,
+   "success_long": 0.8974358974358975,
+   "success_long_std": 0.007252377242938923,
+   "steps": 17.630824372759857,
+   "per_seed": [
+    0.93,
+    0.93,
+    0.93
+   ]
+  },
+  {
+   "label": "2-step loss, retrained on 1 round, running cost",
+   "ours": true,
+   "n_seeds": 3,
+   "success": 0.8966666666666666,
+   "success_std": 0.009428090415820642,
+   "success_short": 1.0,
+   "success_short_std": 0.0,
+   "success_long": 0.841025641025641,
+   "success_long_std": 0.014504754485877899,
+   "steps": 16.416059595834877,
+   "per_seed": [
+    0.89,
+    0.89,
+    0.91
+   ]
+  },
+  {
+   "label": "1-step loss + dropout, running cost (no retraining)",
    "ours": true,
    "n_seeds": 3,
    "success": 0.88,
@@ -187,7 +289,7 @@
    ]
   },
   {
-   "label": "Starting models (demo recipe retrained on Kaggle), final-state cost",
+   "label": "Starting models (8-step loss, Kaggle), final-state cost",
    "ours": true,
    "n_seeds": 3,
    "success": 0.51,
@@ -204,7 +306,7 @@
    ]
   },
   {
-   "label": "Latent CEM (\u03bb=0.09, frameskip 4), final-state cost (demo 22-23 Nov)",
+   "label": "First models (8-step loss), final-state cost",
    "ours": true,
    "n_seeds": 3,
    "success": 0.5166666666666667,
@@ -221,7 +323,7 @@
    ]
   },
   {
-   "label": "Same model, running cost (the demo until 22 Nov)",
+   "label": "Same models, running cost",
    "ours": true,
    "n_seeds": 3,
    "success": 0.3866666666666667,

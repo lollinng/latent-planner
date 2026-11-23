@@ -194,3 +194,10 @@
   2-step 0.89 / 0.89 / 0.91, 2-step + dropout 0.93 / 0.93 / 0.93 (fresh models 0.85 / 0.84 / 0.79; round 0,
   fine-tuning without new data, 0.86 / 0.86 / 0.80). Waiting for the 1-step + dropout version (lp-push-dagger-r1)
   before choosing a demo model by tuning score.
+- 04:20 1-step + dropout + retraining on the planner's attempts (Kaggle lp-push-dagger-r1, running cost). Tuning:
+  start 0.85 / 0.86 / 0.87, round 0 (no new data) 0.95 / 0.92 / 0.88, round 1 0.94 / 0.92 / 0.93, round 2 0.91 /
+  0.92 / 0.91. Test: start 0.84 / 0.85 / 0.84, round 0 0.88 / 0.94 / 0.91, round 1 0.91 / 0.91 / 0.90, round 2 0.92 /
+  0.96 / 0.94. Chosen by mean tuning score over the combined recipes (1-step + dropout round 1: 0.930; 2-step +
+  dropout round 1: 0.923; 2-step round 1: 0.907), seed 0 fixed in advance. Browser planner on the 100 test tasks:
+  0.90 (Python 0.91). Push demo switched to it. Caveats in WRITEUP: for 1-step models most of the retraining gain is
+  the extra training (control 0.91), and the same recipe re-run on the same hardware moved 0.88 -> 0.84.
